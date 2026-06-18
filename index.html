@@ -750,14 +750,20 @@ function playBeep(){
   if(c.state === "suspended"){ c.resume().catch(()=>{}); }
   try{
     const t0 = c.currentTime;
-    [[784,0],[1046,0.13]].forEach(([f,dt])=>{
+    const out = c.createGain(); out.gain.value = 0.9; out.connect(c.destination);
+    // Toque de notificação: duas subidas, som brilhante e alto
+    const notes = [
+      [784, 0.00, 0.16], [1047, 0.12, 0.16], [1319, 0.24, 0.18],
+      [784, 0.46, 0.16], [1047, 0.58, 0.16], [1568, 0.70, 0.42]
+    ];
+    notes.forEach(([f, st, d]) => {
       const o = c.createOscillator(), g = c.createGain();
-      o.type = "sine"; o.frequency.value = f;
-      o.connect(g); g.connect(c.destination);
-      g.gain.setValueAtTime(0.0001, t0+dt);
-      g.gain.exponentialRampToValueAtTime(0.22, t0+dt+0.02);
-      g.gain.exponentialRampToValueAtTime(0.0001, t0+dt+0.17);
-      o.start(t0+dt); o.stop(t0+dt+0.2);
+      o.type = "triangle"; o.frequency.setValueAtTime(f, t0 + st);
+      o.connect(g); g.connect(out);
+      g.gain.setValueAtTime(0.0001, t0 + st);
+      g.gain.exponentialRampToValueAtTime(0.6, t0 + st + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + st + d);
+      o.start(t0 + st); o.stop(t0 + st + d + 0.03);
     });
   }catch(e){}
 }
@@ -952,6 +958,8 @@ function wireGlobalUI(){
   const unlock = () => { resumeAudio(); document.removeEventListener("pointerdown", unlock); document.removeEventListener("keydown", unlock); };
   document.addEventListener("pointerdown", unlock);
   document.addEventListener("keydown", unlock);
+  // Quando o usuário termina de digitar (foco sai de um campo), aplica redesenho pendente
+  document.addEventListener("focusout", () => setTimeout(maybeRerender, 300));
 }
 function closeSidebar(){ $("#sidebar") && $("#sidebar").classList.remove("open"); $("#sbScrim") && $("#sbScrim").classList.remove("on"); }
 
@@ -1136,6 +1144,7 @@ function renderView(){
   }
   wireCommon();
   applyRefocus();
+  pendingRerender = false;
 }
 function wireCommon(){ $$("#view [data-go]").forEach(b => b.addEventListener("click", () => go(b.dataset.go))); }
 function applyRefocus(){
@@ -1146,6 +1155,20 @@ function applyRefocus(){
 }
 
 /* ============================ 12. SYNC / DETECÇÃO DE NOVAS DEMANDAS ============================ */
+let pendingRerender = false;
+function canAutoRerender(){
+  // Não recriar a tela enquanto o usuário interage (evita perder foco/digitação)
+  if(state.view === "nova" || state.view === "config") return false;
+  const m = $("#modal");
+  if(m && m.classList.contains("on")) return false;
+  const ae = document.activeElement;
+  if(ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName) && ae.closest("#view")) return false;
+  return true;
+}
+function maybeRerender(){
+  if(pendingRerender && canAutoRerender()){ pendingRerender = false; renderView(); }
+}
+
 async function reload(opts){
   opts = opts || {};
   if(!state.user) return;
@@ -1153,7 +1176,8 @@ async function reload(opts){
   if(opts.withConfig && state.view !== "config"){ try{ state.config = await Backend.getConfig(); }catch(e){} }
   if(state.user.role === "admin") detectNew();
   renderNav();
-  renderView();
+  if(canAutoRerender()){ renderView(); }
+  else { pendingRerender = true; }
 }
 function refresh(){ return reload({ withConfig:false }); }
 function syncAndDetect(){
@@ -1194,7 +1218,7 @@ function startListeners(){
   setInterval(() => {
     if(!state.user) return;
     renderNav();
-    if(state.view === "saidas" || state.view === "fila") renderView();
+    if((state.view === "saidas" || state.view === "fila") && canAutoRerender()) renderView();
   }, 60000);
 }
 
@@ -1657,6 +1681,7 @@ function closeModal(){
   $("#scrim").classList.remove("on");
   document.body.style.overflow = "";
   setTimeout(() => { if(!m.classList.contains("on")) m.innerHTML = ""; }, 220);
+  setTimeout(maybeRerender, 60);
 }
 
 async function openDetail(id){
