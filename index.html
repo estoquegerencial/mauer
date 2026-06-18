@@ -285,9 +285,54 @@
 
   /* ====== LOGO (imagens da marca) ====== */
   .logo-img{height:30px;width:auto;display:block;flex:none}
-  .auth-lockup{height:46px;width:auto;display:block}
+  .auth-lockup{height:48px;width:auto;max-width:240px;display:block;flex:none;align-self:flex-start;object-fit:contain}
   .auth-panel-logo{display:none}
+  .auth-panel-logo{height:40px!important;width:auto!important;max-width:200px;object-fit:contain;flex:none;align-self:center}
   .tb-logo{height:22px;width:auto;display:block;flex:none}
+
+  /* ====== COMBOBOX (item cadastrado) ====== */
+  .combo{position:relative}
+  .combo-list{position:absolute;z-index:30;left:0;right:0;top:calc(100% + 4px);background:var(--surface);border:1.5px solid var(--line-strong);border-radius:var(--r);box-shadow:var(--shadow-lg);max-height:260px;overflow:auto;display:none}
+  .combo-list.on{display:block}
+  .combo-opt{display:block;width:100%;text-align:left;padding:10px 13px;border-bottom:1px solid var(--line);cursor:pointer;font-size:13px}
+  .combo-opt:last-child{border-bottom:none}
+  .combo-opt:hover,.combo-opt.hl{background:var(--surface-2)}
+  .combo-opt .co-code{font-weight:700;font-family:var(--font-display);letter-spacing:.02em}
+  .combo-opt .co-desc{font-size:11.5px;color:var(--muted)}
+  .combo-empty{padding:11px 13px;font-size:12px;color:var(--muted)}
+
+  /* ====== LINHAS DE ITENS (múltiplos SKUs) ====== */
+  .item-row{display:grid;grid-template-columns:1fr 120px 38px;gap:10px;align-items:start;margin-bottom:10px}
+  .item-row .ir-del{color:var(--danger);padding:9px;border-radius:7px;align-self:start;margin-top:1px}
+  .item-row .ir-del:hover{background:var(--danger-bg)}
+  .item-desc{font-size:11.5px;color:var(--muted);margin-top:4px;min-height:14px}
+  @media(max-width:560px){.item-row{grid-template-columns:1fr 84px 34px}}
+
+  /* ====== NOVA SOLICITAÇÃO: layout com painel lateral ====== */
+  .nova-grid{display:grid;grid-template-columns:1fr 360px;gap:18px;align-items:start}
+  @media(max-width:1080px){.nova-grid{grid-template-columns:1fr}}
+  .side-panel{position:sticky;top:18px}
+  .side-panel .sp-head{display:flex;align-items:center;gap:9px;padding:15px 18px;border-bottom:1px solid var(--line)}
+  .side-panel .sp-head svg{width:17px;height:17px;color:var(--orange-d)}
+  .side-panel .sp-head h3{font-family:var(--font-display);text-transform:uppercase;letter-spacing:.04em;font-size:13px;font-weight:700}
+  .side-panel .sp-body{padding:14px 16px;max-height:60vh;overflow:auto}
+  .note-card{border:1.5px solid var(--line);border-radius:var(--r);padding:12px 13px;margin-bottom:10px;cursor:pointer;transition:.12s;background:var(--surface-2)}
+  .note-card:hover{border-color:var(--orange);background:var(--warn-bg)}
+  .note-card.sel{border-color:var(--ok);box-shadow:0 0 0 1.5px var(--ok) inset}
+  .note-card .nc-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+  .note-card .nc-nota{font-family:var(--font-display);font-weight:800;font-size:13.5px}
+  .note-card .nc-meta{font-size:11.5px;color:var(--muted);line-height:1.5}
+  .note-card .nc-itens{margin-top:7px;display:flex;flex-direction:column;gap:4px}
+  .note-card .nc-item{display:flex;justify-content:space-between;gap:8px;font-size:12px;border-top:1px dashed var(--line);padding-top:4px}
+  .note-card .nc-item .nci-code{font-weight:600}
+  .note-card .nc-item .nci-qty{font-weight:800;font-variant-numeric:tabular-nums;color:var(--ok)}
+  .sp-empty{padding:24px 8px;text-align:center;color:var(--muted);font-size:12.5px}
+  .sp-tag{display:inline-block;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:2px 7px;border-radius:20px;background:var(--info-bg);color:var(--info)}
+
+  /* ====== SAIR (rótulo) ====== */
+  .sb-logout{display:flex;align-items:center;gap:11px;width:100%;text-align:left;padding:9px 12px;border-radius:9px;color:#f0a4a4;font-weight:600;font-size:13px;margin-top:4px;transition:.13s}
+  .sb-logout:hover{background:rgba(214,69,69,.16);color:#ffd0d0}
+  .sb-logout svg{width:17px;height:17px;flex:none}
   /* ====== BOTÃO DE TEMA ====== */
   .sb-theme{display:flex;align-items:center;gap:11px;width:100%;text-align:left;padding:9px 12px;border-radius:9px;color:#c2cce0;font-weight:500;font-size:13px;margin-bottom:6px;transition:.13s}
   .sb-theme:hover{background:var(--navy-2);color:#fff}
@@ -489,7 +534,10 @@ const DEFAULT_CONFIG = {
     { id:"devol_forn",   label:"Devolução ao fornecedor" }
   ],
   prazo_padrao_dias: 15,
-  som_ativo: true
+  som_ativo: true,
+  // Itens (pneus) cadastrados pelo admin — usados na lista suspensa de "Código do pneu".
+  // Cada item: { codigo:"295/80R22.5 Comforser CF300", descricao:"Borrachudo" }
+  itens_cadastrados: []
 };
 
 const STATUS = {
@@ -833,9 +881,84 @@ function movBadge(m){
 }
 function movLabel(m){ return m === "entrada" ? "Entrada" : "Saída"; }
 
+/* ---- ITENS (múltiplos SKUs por NF) ---- */
+/* Normaliza qualquer registro (novo com `itens` OU legado com codigo_pneu/quantidade)
+   para um array [{ codigo, descricao, quantidade }]. */
+function normItens(s){
+  if(s && Array.isArray(s.itens) && s.itens.length){
+    return s.itens.map(it => ({
+      codigo: String(it.codigo || "").trim(),
+      descricao: it.descricao || "",
+      quantidade: Math.max(0, parseInt(it.quantidade, 10) || 0)
+    })).filter(it => it.codigo);
+  }
+  // legado: um único código
+  if(s && s.codigo_pneu){
+    return [{ codigo: String(s.codigo_pneu).trim(), descricao: "", quantidade: Math.max(0, parseInt(s.quantidade,10) || 0) }];
+  }
+  return [];
+}
+function solQtdTotal(s){ return normItens(s).reduce((a,it) => a + (it.quantidade||0), 0); }
+function solCodigoResumo(s){
+  const its = normItens(s);
+  if(!its.length) return "—";
+  if(its.length === 1) return its[0].codigo;
+  return its[0].codigo + ` +${its.length - 1}`;
+}
+function solCodigoTitle(s){ return normItens(s).map(it => `${it.codigo} (${it.quantidade})`).join(" · "); }
+
+/* ---- ITENS CADASTRADOS (admin) ---- */
+function itensCadastrados(){ return (state.config && state.config.itens_cadastrados) || []; }
+function findItemCad(codigo){
+  const c = String(codigo||"").trim().toLowerCase();
+  return itensCadastrados().find(i => String(i.codigo||"").trim().toLowerCase() === c) || null;
+}
+
+/* ---- SALDO DE ENTRADA (vínculo entrada↔saída, baixa parcial) ---- */
+/* Soma, por código, o que já saiu de uma entrada: saídas CONCLUÍDAS vinculadas a ela. */
+function consumoDeEntrada(entradaId){
+  const map = {};
+  if(!entradaId) return map;
+  (state.sols || []).forEach(s => {
+    if(s.movimentacao === "saida" && s.status === "concluido" && s.entrada_ref_id === entradaId && !s.deleted_at){
+      normItens(s).forEach(it => { map[it.codigo] = (map[it.codigo] || 0) + (it.quantidade||0); });
+    }
+  });
+  return map;
+}
+/* Retorna o saldo (pendente para saída) de uma entrada, item a item. */
+function saldoEntrada(entrada){
+  const its = normItens(entrada);
+  // legado: baixa total marcada via saida_resolvida (sem saída vinculada)
+  const legadoResolvido = !!entrada.saida_resolvida;
+  const cons = consumoDeEntrada(entrada.id);
+  let saldoTotal = 0, consumidoTotal = 0, originalTotal = 0;
+  const itens = its.map(it => {
+    const original = it.quantidade || 0;
+    let consumido = cons[it.codigo] || 0;
+    if(legadoResolvido) consumido = original;            // entradas resolvidas no fluxo antigo
+    const saldo = Math.max(0, original - consumido);
+    originalTotal += original; consumidoTotal += Math.min(consumido, original); saldoTotal += saldo;
+    return { codigo: it.codigo, descricao: it.descricao, original, consumido, saldo };
+  });
+  return { itens, saldoTotal, consumidoTotal, originalTotal };
+}
+/* Notas de entrada (concluídas, que exigem saída) com saldo > 0, filtradas por filial e (opcional) código. */
+function entradasComSaldo({ filial, codigo } = {}){
+  const cod = codigo ? String(codigo).trim().toLowerCase() : "";
+  return (state.sols || [])
+    .filter(s => s.movimentacao === "entrada" && s.status === "concluido" && s.requer_saida && !s.deleted_at)
+    .filter(s => !filial || s.filial === filial)
+    .map(s => ({ sol: s, saldo: saldoEntrada(s) }))
+    .filter(x => x.saldo.saldoTotal > 0)
+    .filter(x => !cod || x.saldo.itens.some(it => it.saldo > 0 && it.codigo.toLowerCase().includes(cod)))
+    .sort((a,b) => new Date(a.sol.concluido_at||a.sol.created_at) - new Date(b.sol.concluido_at||b.sol.created_at));
+}
+
 /* Avaliação da pendência de saída — relógio = concluido_at */
 function overdueInfo(s){
-  if(s.status !== "concluido" || !s.requer_saida || s.saida_resolvida) return { state:"none" };
+  if(s.status !== "concluido" || !s.requer_saida) return { state:"none" };
+  if(saldoEntrada(s).saldoTotal <= 0) return { state:"none" };
   const ref = s.concluido_at;
   const prazo = s.prazo_dias || (state.config && state.config.prazo_padrao_dias) || 15;
   const d = daysSince(ref);
@@ -846,7 +969,7 @@ function overdueInfo(s){
   return { state:"ok", dias:d, restante, prazo };
 }
 function pendingSaidas(sols){
-  return sols.filter(s => s.status === "concluido" && s.requer_saida && !s.saida_resolvida);
+  return sols.filter(s => s.status === "concluido" && s.requer_saida && saldoEntrada(s).saldoTotal > 0);
 }
 function statusCell(s){
   const st = STATUS[s.status] || STATUS.pendente;
@@ -1083,6 +1206,15 @@ function renderUser(){
        <div class="rl">${u.role === "admin" ? "Administrador" : "Solicitante"}${u.filial ? " · " + esc(u.filial) : ""}</div></div>
      <button class="out" id="btnLogout" title="Sair" aria-label="Sair">${ICONS.logout}</button>`;
   $("#btnLogout").addEventListener("click", doLogout);
+  // botão de sair com rótulo (mais visível)
+  const foot = sb.parentElement;
+  if(foot && !$("#btnLogoutLabel")){
+    const b = document.createElement("button");
+    b.id = "btnLogoutLabel"; b.className = "sb-logout"; b.type = "button";
+    b.innerHTML = `${ICONS.logout}<span>Sair da conta</span>`;
+    b.addEventListener("click", doLogout);
+    foot.appendChild(b);
+  }
 }
 
 function renderNav(){
@@ -1203,7 +1335,7 @@ function detectNew(){
     toast({
       title: novos.length === 1 ? "Nova solicitação" : novos.length + " novas solicitações",
       msg: novos.length === 1
-        ? `${first.created_by_nome || "Usuário"} · ${esc(first.filial)} · ${movLabel(first.movimentacao)} · ${first.quantidade}× ${first.codigo_pneu}`
+        ? `${first.created_by_nome || "Usuário"} · ${esc(first.filial)} · ${movLabel(first.movimentacao)} · ${solQtdTotal(first)}× ${solCodigoResumo(first)}`
         : "Há novas demandas aguardando emissão de nota.",
       icon: ICONS.bell
     });
@@ -1229,13 +1361,17 @@ function solRowCells(s, opts){
   cells.push(`<td class="t-when">${fmtDateTime(s.created_at)}<div class="t-sub">${relTime(s.created_at)}</div></td>`);
   cells.push(`<td>${esc(s.filial || "—")}</td>`);
   cells.push(`<td>${movBadge(s.movimentacao)}</td>`);
-  cells.push(`<td><span class="t-code">${esc(s.codigo_pneu)}</span></td>`);
-  cells.push(`<td class="right qty">${s.quantidade}</td>`);
+  cells.push(`<td><span class="t-code" title="${esc(solCodigoTitle(s))}">${esc(solCodigoResumo(s))}</span>${normItens(s).length>1?`<div class="t-sub">${normItens(s).length} itens</div>`:""}</td>`);
+  cells.push(`<td class="right qty">${solQtdTotal(s)}</td>`);
   const motSub = (s.movimentacao === "entrada" && s.requer_saida)
     ? `<div class="t-sub">${ov.state === "danger" ? "Saída vencida" : ov.state === "warn" ? "Saída a vencer" : "Requer saída"}</div>` : "";
   cells.push(`<td>${esc(s.motivo_label)}${motSub}</td>`);
   if(opts.solicitante) cells.push(`<td><div class="wrap-actions" style="gap:8px">${avatarMini(s.created_by, s.created_by_nome)}<span>${esc(s.created_by_nome || "—")}</span></div></td>`);
   if(opts.nota)        cells.push(`<td>${s.nota_numero ? `<span class="t-code">${esc(s.nota_numero)}</span>` : `<span class="muted">—</span>`}</td>`);
+  if(opts.obs){
+    const o = s.observacao || s.conclusao_observacao || "";
+    cells.push(`<td>${o ? `<span class="t-sub" title="${esc(o)}" style="display:inline-block;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom">${esc(o)}</span>` : `<span class="muted">—</span>`}</td>`);
+  }
   if(opts.status)      cells.push(`<td>${statusCell(s)}</td>`);
   if(opts.actions)     cells.push(`<td class="right">${rowAction(s, opts.actions)}</td>`);
   return cells.join("");
@@ -1250,7 +1386,7 @@ function rowAction(s, kind){
 function tableOnly(list, opts){
   const head = `<tr>
     <th>Quando</th><th>Filial</th><th>Mov.</th><th>Código</th><th class="right">Qtd</th><th>Motivo</th>
-    ${opts.solicitante ? "<th>Solicitante</th>" : ""}${opts.nota ? "<th>Nota</th>" : ""}${opts.status ? "<th>Status</th>" : ""}${opts.actions ? '<th class="right">Ação</th>' : ""}</tr>`;
+    ${opts.solicitante ? "<th>Solicitante</th>" : ""}${opts.nota ? "<th>Nota</th>" : ""}${opts.obs ? "<th>Observação</th>" : ""}${opts.status ? "<th>Status</th>" : ""}${opts.actions ? '<th class="right">Ação</th>' : ""}</tr>`;
   const rows = list.map(s => {
     const ov = overdueInfo(s);
     const cls = ov.state === "danger" ? ' class="row-flag"' : (ov.state === "warn" ? ' class="row-warn"' : "");
@@ -1276,74 +1412,264 @@ function wireRows(){
 }
 
 /* ============================ 14. VIEW — NOVA SOLICITAÇÃO ============================ */
+function novaItemRowHTML(idx, it){
+  it = it || { codigo:"", descricao:"", qtd:1 };
+  const temCad = itensCadastrados().length > 0;
+  return `<div class="item-row" data-idx="${idx}">
+      <div>
+        <div class="combo">
+          <input type="text" class="ctrl ir-code" data-idx="${idx}" autocomplete="off" spellcheck="false"
+                 placeholder="${temCad ? "Selecione o pneu (digite p/ filtrar)" : "Ex.: 295/80R22.5 Comforser CF300"}" value="${esc(it.codigo||"")}">
+          <div class="combo-list" data-idx="${idx}"></div>
+        </div>
+        <div class="item-desc" data-idx="${idx}">${esc(it.descricao||"")}</div>
+      </div>
+      <input type="number" min="1" step="1" class="ctrl ir-qty" data-idx="${idx}" value="${it.qtd||1}" placeholder="Qtd">
+      <button type="button" class="ir-del" data-idx="${idx}" title="Remover item">${ICONS.trash}</button>
+    </div>`;
+}
+function renderNovaItens(){
+  const wrap = $("#itensWrap"); if(!wrap) return;
+  if(!nova.itens.length) nova.itens = [{ codigo:"", descricao:"", qtd:1 }];
+  wrap.innerHTML = nova.itens.map((it,i) => novaItemRowHTML(i, it)).join("");
+  $$("#itensWrap .item-row").forEach(row => wireItemRow(row));
+}
+function wireItemRow(row){
+  const idx = +row.dataset.idx;
+  const input = row.querySelector(".ir-code");
+  const list  = row.querySelector(".combo-list");
+  const descEl= row.querySelector(".item-desc");
+  const qty   = row.querySelector(".ir-qty");
+  attachCombo(input, list, descEl, idx);
+  qty.addEventListener("input", () => { nova.itens[idx].qtd = Math.max(1, parseInt(qty.value,10)||1); });
+  row.querySelector(".ir-del").addEventListener("click", () => {
+    nova.itens.splice(idx,1);
+    if(!nova.itens.length) nova.itens = [{ codigo:"", descricao:"", qtd:1 }];
+    renderNovaItens();
+  });
+}
+/* Combobox de item cadastrado: digita p/ filtrar, mas seleciona da lista. Texto livre só se NÃO houver itens cadastrados. */
+function attachCombo(input, list, descEl, idx){
+  const temCad = itensCadastrados().length > 0;
+  let hl = -1;
+  const matches = () => {
+    const q = input.value.trim().toLowerCase();
+    let arr = itensCadastrados();
+    if(q) arr = arr.filter(i => (i.codigo+" "+(i.descricao||"")).toLowerCase().includes(q));
+    return arr.slice(0, 40);
+  };
+  const draw = () => {
+    if(!temCad){ list.innerHTML = `<div class="combo-empty">Nenhum item cadastrado. O administrador pode cadastrar em Configurações › Itens. Você pode digitar livremente.</div>`; list.classList.add("on"); return; }
+    const arr = matches(); hl = -1;
+    if(!arr.length){ list.innerHTML = `<div class="combo-empty">Nenhum item encontrado para “${esc(input.value.trim())}”.</div>`; list.classList.add("on"); return; }
+    list.innerHTML = arr.map((i,k) => `<button type="button" class="combo-opt" data-k="${k}" data-code="${esc(i.codigo)}"><span class="co-code">${esc(i.codigo)}</span>${i.descricao?`<span class="co-desc">${esc(i.descricao)}</span>`:""}</button>`).join("");
+    list.classList.add("on");
+    list.querySelectorAll(".combo-opt").forEach(opt => {
+      opt.addEventListener("mousedown", (e) => { e.preventDefault(); pick(opt.dataset.code); });
+    });
+  };
+  const pick = (codigo) => {
+    const it = findItemCad(codigo);
+    input.value = codigo;
+    nova.itens[idx].codigo = codigo;
+    nova.itens[idx].descricao = it ? (it.descricao||"") : "";
+    descEl.textContent = nova.itens[idx].descricao;
+    list.classList.remove("on");
+  };
+  input.addEventListener("focus", draw);
+  input.addEventListener("input", () => {
+    nova.itens[idx].codigo = input.value.trim();
+    const it = findItemCad(input.value);
+    nova.itens[idx].descricao = it ? (it.descricao||"") : "";
+    descEl.textContent = nova.itens[idx].descricao;
+    draw();
+  });
+  input.addEventListener("keydown", (e) => {
+    if(!list.classList.contains("on")) return;
+    const opts = Array.from(list.querySelectorAll(".combo-opt"));
+    if(e.key === "ArrowDown"){ e.preventDefault(); hl = Math.min(opts.length-1, hl+1); }
+    else if(e.key === "ArrowUp"){ e.preventDefault(); hl = Math.max(0, hl-1); }
+    else if(e.key === "Enter"){ if(opts[hl]){ e.preventDefault(); pick(opts[hl].dataset.code); return; } }
+    else if(e.key === "Escape"){ list.classList.remove("on"); return; }
+    opts.forEach((o,i)=>o.classList.toggle("hl", i===hl));
+    if(opts[hl]) opts[hl].scrollIntoView({ block:"nearest" });
+  });
+  input.addEventListener("blur", () => { setTimeout(() => list.classList.remove("on"), 140); });
+}
+
+/* Painel lateral: notas de ENTRADA com saldo pendente (apenas em saída) */
+function renderEntradaPanel(){
+  const panel = $("#sidePanel"); if(!panel) return;
+  if(nova.mov !== "saida"){
+    panel.innerHTML = `<div class="card"><div class="sp-head">${ICONS.info}<h3>Dica</h3></div>
+      <div class="sp-body"><p class="t-sub">Você está registrando uma <b>entrada</b>. Adicione um ou mais pneus (SKUs) abaixo. Entradas com motivo que “requer saída” entram na lista de <b>Saídas pendentes</b> até a baixa.</p></div></div>`;
+    return;
+  }
+  const filial = $("#fFilial") ? $("#fFilial").value : "";
+  const filtroNota = $("#fEntradaNota") ? $("#fEntradaNota").value.trim().toLowerCase() : "";
+  let lista = entradasComSaldo({ filial });
+  if(filtroNota) lista = lista.filter(x => String(x.sol.nota_numero||"").toLowerCase().includes(filtroNota));
+  const head = `<div class="sp-head">${ICONS.saidas}<h3>Notas de entrada · saldo</h3></div>`;
+  let body;
+  if(!filial){
+    body = `<div class="sp-empty">Selecione a <b>filial</b> para ver as notas de entrada com saldo pendente de saída.</div>`;
+  } else if(!lista.length){
+    body = `<div class="sp-empty">Nenhuma nota de entrada com saldo pendente${filtroNota?` para “${esc(filtroNota)}”`:""} nesta filial.</div>`;
+  } else {
+    body = lista.map(x => {
+      const s = x.sol, sel = nova.entradaRef && nova.entradaRef.id === s.id;
+      const itensHtml = x.saldo.itens.filter(it => it.saldo > 0).map(it =>
+        `<div class="nc-item"><span class="nci-code">${esc(it.codigo)}${it.descricao?` · <span class="t-sub">${esc(it.descricao)}</span>`:""}</span><span class="nci-qty">${it.saldo}</span></div>`).join("");
+      return `<div class="note-card${sel?" sel":""}" data-id="${s.id}">
+          <div class="nc-top"><span class="nc-nota">NF ${esc(s.nota_numero||"—")}</span><span class="sp-tag">${x.saldo.saldoTotal} pend.</span></div>
+          <div class="nc-meta">${esc(s.motivo_label||"")}<br>Entrada concluída ${fmtDate(s.concluido_at||s.created_at)} · por ${esc(s.concluido_by_nome||s.created_by_nome||"—")}</div>
+          <div class="nc-itens">${itensHtml}</div>
+        </div>`;
+    }).join("");
+  }
+  panel.innerHTML = `<div class="card">${head}<div class="sp-body">${body}</div></div>`;
+  $$("#sidePanel .note-card").forEach(c => c.addEventListener("click", () => importarEntrada(c.dataset.id)));
+}
+function importarEntrada(entradaId){
+  const s = (state.sols||[]).find(x => x.id === entradaId); if(!s) return;
+  const saldo = saldoEntrada(s);
+  const itens = saldo.itens.filter(it => it.saldo > 0).map(it => ({
+    codigo: it.codigo, descricao: findItemCad(it.codigo)?.descricao || it.descricao || "", qtd: it.saldo
+  }));
+  if(!itens.length){ toast({ kind:"danger", title:"Sem saldo", msg:"Essa nota não tem itens pendentes de saída." }); return; }
+  nova.itens = itens;
+  nova.entradaRef = { id: s.id, nota: s.nota_numero || "" };
+  // observação automática com a referência da nota de entrada
+  const refLinha = `Saída ref. à NF de entrada ${s.nota_numero || "—"} · ${s.motivo_label || ""} · entrada ${fmtDate(s.concluido_at||s.created_at)}`;
+  const obsEl = $("#fObs");
+  if(obsEl){
+    const atual = obsEl.value.trim();
+    obsEl.value = atual ? (refLinha + "\n" + atual) : refLinha;
+    nova.obs = obsEl.value;
+  }
+  // garante filial coerente
+  const ff = $("#fFilial"); if(ff && s.filial) ff.value = s.filial;
+  renderNovaItens();
+  renderEntradaPanel();
+  toast({ kind:"ok", title:"Itens importados", msg:`NF ${s.nota_numero||""} · ${itens.length} item(ns) carregado(s). Ajuste as quantidades se a saída for parcial.` });
+}
+
 function viewNova(){
   const head = `<div class="page-head"><div>
       <div class="crumb">Operação</div><h1>Nova solicitação</h1>
-      <p class="lead">Solicite a emissão de uma nota de entrada ou de saída para um pneu que existe em sistema mas não no físico (ou vice-versa).</p>
+      <p class="lead">Solicite a emissão de uma nota de entrada ou de saída. Em saídas, vincule a nota de entrada de origem para controlar o saldo pendente.</p>
     </div></div>`;
-  const form = `<div class="card card-pad" style="max-width:720px">
+  const form = `<div class="card card-pad">
       <div class="field"><label>Movimentação <span class="req">*</span></label>
         <div class="seg io" id="segMov"><button type="button" data-v="entrada" class="on">Entrada</button><button type="button" data-v="saida">Saída</button></div>
       </div>
       <div class="grid-2">
         <div class="field"><label>Filial <span class="req">*</span></label><select class="ctrl" id="fFilial">${filialOptions(state.user.filial)}</select></div>
-        <div class="field"><label>Quantidade <span class="req">*</span></label><input type="number" min="1" step="1" value="1" class="ctrl" id="fQtd"></div>
-      </div>
-      <div class="grid-2">
-        <div class="field"><label>Código do pneu <span class="req">*</span></label><input type="text" class="ctrl" id="fCodigo" placeholder="Ex.: 295/80R22.5 Comforser CF300" autocomplete="off"></div>
         <div class="field"><label>Identificado por <span class="req">*</span></label><input type="text" class="ctrl" id="fIdent" value="${esc(state.user.nome)}"><div class="hint">Quem está solicitando / responsável pela informação.</div></div>
       </div>
+      <div class="field" id="fEntradaNotaWrap" style="display:none"><label>Nota de entrada de origem (opcional)</label><input type="text" class="ctrl" id="fEntradaNota" placeholder="Digite o nº da NF de entrada para localizar no painel ao lado" autocomplete="off"><div class="hint">Ao digitar, o painel ao lado filtra as notas de entrada com saldo. Clique numa nota para importar os itens e quantidades.</div></div>
       <div class="field"><label>Motivo <span class="req">*</span></label><select class="ctrl" id="fMotivo"></select><div class="hint" id="motivoHint"></div></div>
+      <div class="field"><label>Itens (pneus) <span class="req">*</span></label>
+        <div id="itensWrap"></div>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnAddItem" style="margin-top:2px">${ICONS.plus} Adicionar outro pneu</button>
+      </div>
       <div class="field"><label>Observação</label><textarea class="ctrl" id="fObs" placeholder="Detalhes adicionais (opcional)"></textarea></div>
       <div class="wrap-actions" style="justify-content:flex-end;margin-top:4px"><button class="btn btn-primary" id="btnSalvarSol">${ICONS.check} Registrar solicitação</button></div>
     </div>`;
-  return `<div class="page">${head}${form}</div>`;
+  return `<div class="page">${head}<div class="nova-grid"><div>${form}</div><div class="side-panel" id="sidePanel"></div></div></div>`;
 }
 function wireNova(){
-  nova = { mov:"entrada" };
+  nova = { mov:"entrada", itens:[{ codigo:"", descricao:"", qtd:1 }], entradaRef:null, obs:"" };
   const updateHint = () => {
     const hint = $("#motivoHint"); if(!hint) return;
     if(nova.mov === "entrada"){
       const m = state.config.motivos_entrada.find(x => x.id === $("#fMotivo").value);
       if(m && m.requer_saida) hint.innerHTML = `Gera <b>pendência de saída</b> — alerta após <b>${m.prazo_dias || state.config.prazo_padrao_dias} dias</b> da conclusão.`;
       else hint.textContent = "Entrada definitiva — não gera pendência de saída.";
-    } else hint.textContent = "Saída de pneu do estoque.";
+    } else hint.textContent = "Saída de pneu do estoque. Vincule a nota de entrada de origem no painel ao lado, se houver.";
   };
   const fill = () => { $("#fMotivo").innerHTML = motivoOptions(nova.mov); updateHint(); };
+  const applyMov = () => {
+    $("#fEntradaNotaWrap").style.display = nova.mov === "saida" ? "" : "none";
+    fill(); renderEntradaPanel();
+  };
   fill();
+  renderNovaItens();
+  renderEntradaPanel();
   $$("#segMov button").forEach(b => b.addEventListener("click", () => {
-    $$("#segMov button").forEach(x => x.classList.remove("on")); b.classList.add("on"); nova.mov = b.dataset.v; fill();
+    $$("#segMov button").forEach(x => x.classList.remove("on")); b.classList.add("on");
+    nova.mov = b.dataset.v;
+    if(nova.mov === "entrada"){ nova.entradaRef = null; }
+    applyMov();
   }));
   $("#fMotivo").addEventListener("change", updateHint);
+  $("#fFilial").addEventListener("change", () => { if(nova.entradaRef){ nova.entradaRef = null; } renderEntradaPanel(); });
+  $("#fEntradaNota") && $("#fEntradaNota").addEventListener("input", debounce(renderEntradaPanel, 200));
+  $("#fObs").addEventListener("input", () => { nova.obs = $("#fObs").value; });
+  $("#btnAddItem").addEventListener("click", () => { nova.itens.push({ codigo:"", descricao:"", qtd:1 }); renderNovaItens(); });
   $("#btnSalvarSol").addEventListener("click", submitNova);
 }
 async function submitNova(){
   const mov = nova.mov;
   const filial = $("#fFilial").value;
-  const codigo = $("#fCodigo").value.trim();
-  const qtd = parseInt($("#fQtd").value, 10);
   const ident = $("#fIdent").value.trim();
   const motivoId = $("#fMotivo").value;
   const obs = $("#fObs").value.trim();
   if(!filial){ toast({ kind:"danger", title:"Selecione a filial" }); return; }
-  if(!codigo){ toast({ kind:"danger", title:"Informe o código do pneu" }); $("#fCodigo").focus(); return; }
-  if(!qtd || qtd < 1){ toast({ kind:"danger", title:"Quantidade inválida" }); $("#fQtd").focus(); return; }
   if(!ident){ toast({ kind:"danger", title:"Informe quem está identificando" }); $("#fIdent").focus(); return; }
+
+  // valida itens
+  const itens = nova.itens
+    .map(it => ({ codigo: String(it.codigo||"").trim(), descricao: it.descricao||"", quantidade: Math.max(0, parseInt(it.qtd,10)||0) }))
+    .filter(it => it.codigo && it.quantidade > 0);
+  if(!itens.length){ toast({ kind:"danger", title:"Adicione ao menos um pneu", msg:"Informe código e quantidade." }); return; }
+  // sem duplicar código
+  const vistos = new Set();
+  for(const it of itens){ const k = it.codigo.toLowerCase(); if(vistos.has(k)){ toast({ kind:"danger", title:"Código repetido", msg:`“${it.codigo}” aparece mais de uma vez. Some as quantidades em uma linha só.` }); return; } vistos.add(k); }
+  // se há itens cadastrados, exige que cada código seja um deles
+  // (exceção: saída vinculada a uma entrada — os códigos vêm da própria NF de entrada)
+  const vinculada = mov === "saida" && nova.entradaRef && nova.entradaRef.id;
+  if(itensCadastrados().length && !vinculada){
+    const invalido = itens.find(it => !findItemCad(it.codigo));
+    if(invalido){ toast({ kind:"danger", title:"Item não cadastrado", msg:`“${invalido.codigo}” não está na lista de itens cadastrados. Selecione um item da lista.` }); return; }
+    // normaliza descrição a partir do cadastro
+    itens.forEach(it => { const c = findItemCad(it.codigo); if(c){ it.codigo = c.codigo; it.descricao = c.descricao || ""; } });
+  } else {
+    // ainda assim, completa a descrição quando o código existir no cadastro
+    itens.forEach(it => { const c = findItemCad(it.codigo); if(c){ it.descricao = c.descricao || it.descricao; } });
+  }
+  // saída vinculada: avisa se quantidade ultrapassa o saldo
+  if(mov === "saida" && nova.entradaRef && nova.entradaRef.id){
+    const ent = (state.sols||[]).find(x => x.id === nova.entradaRef.id);
+    if(ent){
+      const saldo = saldoEntrada(ent);
+      const excede = itens.find(it => { const li = saldo.itens.find(s => s.codigo.toLowerCase() === it.codigo.toLowerCase()); return li && it.quantidade > li.saldo; });
+      if(excede){ const li = saldo.itens.find(s => s.codigo.toLowerCase() === excede.codigo.toLowerCase()); toast({ kind:"warn", title:"Quantidade acima do saldo", msg:`“${excede.codigo}” tem saldo ${li?li.saldo:0} na NF ${nova.entradaRef.nota}. Confira antes de concluir.`, timeout:8000 }); }
+    }
+  }
+
   const list = mov === "entrada" ? state.config.motivos_entrada : state.config.motivos_saida;
   const motivo = list.find(m => m.id === motivoId);
   if(!motivo){ toast({ kind:"danger", title:"Selecione o motivo" }); return; }
+
+  const total = itens.reduce((a,it)=>a+it.quantidade,0);
   const data = {
     created_by: state.user.id, created_by_nome: state.user.nome,
-    filial, movimentacao: mov, codigo_pneu: codigo, quantidade: qtd,
+    filial, movimentacao: mov,
+    itens,
+    codigo_pneu: itens[0].codigo,   // compatibilidade com versões antigas / colunas legadas
+    quantidade: total,
     motivo_id: motivo.id, motivo_label: motivo.label,
     requer_saida: mov === "entrada" ? !!motivo.requer_saida : false,
     prazo_dias: mov === "entrada" ? (motivo.prazo_dias || 0) : 0,
-    identificador_por: ident, observacao: obs || null
+    identificador_por: ident, observacao: obs || null,
+    entrada_ref_id: mov === "saida" ? (nova.entradaRef && nova.entradaRef.id) || null : null,
+    entrada_ref_nota: mov === "saida" ? (nova.entradaRef && nova.entradaRef.nota) || null : null
   };
   const btn = $("#btnSalvarSol"); btn.disabled = true;
   try{
     await Backend.createSolicitacao(data);
-    toast({ kind:"ok", title:"Solicitação registrada", msg: movLabel(mov) + " · " + qtd + "× " + codigo });
+    toast({ kind:"ok", title:"Solicitação registrada", msg: movLabel(mov) + " · " + total + "× " + (itens.length>1?`${itens.length} itens`:itens[0].codigo) });
     state.view = "fila"; await refresh(); window.scrollTo(0, 0);
   }catch(e){ btn.disabled = false; toast({ kind:"danger", title:"Erro ao registrar", msg:(e&&e.message)||String(e) }); }
 }
@@ -1374,20 +1700,29 @@ function viewFila(){
 
 /* ============================ 16. VIEW — SAÍDAS PENDENTES (admin) ============================ */
 function saidasTable(list){
-  const head = `<tr><th>Concluída em</th><th>Filial</th><th>Código</th><th class="right">Qtd</th><th>Motivo</th><th class="right">Prazo</th><th>Situação</th><th class="right">Ação</th></tr>`;
+  const head = `<tr><th>Concluída em</th><th>Filial</th><th>Nota entrada</th><th>Código</th><th class="right">Saldo</th><th>Motivo</th><th class="right">Prazo</th><th>Situação</th><th class="right">Ação</th></tr>`;
   const rows = list.map(s => {
     const ov = overdueInfo(s);
+    const saldo = saldoEntrada(s);
     const cls = ov.state === "danger" ? ' class="row-flag"' : (ov.state === "warn" ? ' class="row-warn"' : "");
     const sit = ov.state === "danger"
       ? `<span class="badge b-danger"><span class="b-dot"></span>Vencida há ${Math.abs(ov.restante)} d</span>`
       : ov.state === "warn"
         ? `<span class="badge b-warn"><span class="b-dot"></span>Vence em ${ov.restante} d</span>`
         : `<span class="badge b-info"><span class="b-dot"></span>Em prazo · ${ov.restante} d</span>`;
+    const pend = saldo.itens.filter(it => it.saldo > 0);
+    const codCell = pend.length === 1
+      ? `<span class="t-code">${esc(pend[0].codigo)}</span>`
+      : `<span class="t-code" title="${esc(pend.map(it=>it.codigo+" ("+it.saldo+")").join(" · "))}">${esc(pend[0]?pend[0].codigo:"—")}</span><div class="t-sub">${pend.length} itens</div>`;
+    const saldoCell = saldo.consumidoTotal > 0
+      ? `<span class="qty">${saldo.saldoTotal}</span><div class="t-sub">de ${saldo.originalTotal}</div>`
+      : `<span class="qty">${saldo.saldoTotal}</span>`;
     return `<tr data-id="${s.id}" style="cursor:pointer"${cls}>
         <td class="t-when">${fmtDateTime(s.concluido_at)}<div class="t-sub">${relTime(s.concluido_at)}</div></td>
         <td>${esc(s.filial || "—")}</td>
-        <td><span class="t-code">${esc(s.codigo_pneu)}</span><div class="t-sub">nota ${esc(s.nota_numero || "—")}</div></td>
-        <td class="right qty">${s.quantidade}</td>
+        <td><span class="t-code">${esc(s.nota_numero || "—")}</span></td>
+        <td>${codCell}</td>
+        <td class="right">${saldoCell}</td>
         <td>${esc(s.motivo_label)}</td>
         <td class="right"><span class="pill-days">${ov.prazo}</span> <span class="t-sub">dias</span></td>
         <td>${sit}</td>
@@ -1413,7 +1748,7 @@ function viewSaidas(){
       ${kpi("Pendências", all.length, ICONS.saidas, all.length ? "warn" : "info")}
       ${kpi("Vencidas", danger.length, ICONS.alert, danger.length ? "danger" : "info")}
       ${kpi("A vencer (≤3d)", warn.length, ICONS.historico, warn.length ? "warn" : "info")}
-      ${kpiAccent("Mais crítica", most ? relTime(most.concluido_at) : "—", most ? (most.codigo_pneu + " · " + most.filial) : "sem pendências")}
+      ${kpiAccent("Mais crítica", most ? relTime(most.concluido_at) : "—", most ? (solCodigoResumo(most) + " · " + most.filial) : "sem pendências")}
     </div>`;
   let alert = "";
   if(danger.length) alert = `<div class="alert-box danger">${ICONS.alert}<div><div class="ab-t">${danger.length} pendência(s) de saída vencida(s)</div><div class="ab-m">O prazo do motivo da entrada já passou e a saída ainda não foi registrada.</div></div></div>`;
@@ -1436,7 +1771,7 @@ function histFilter(){
   if(HF.ate){ const t = new Date(HF.ate + "T23:59:59").getTime(); list = list.filter(s => new Date(s.created_at).getTime() <= t); }
   if(HF.q){
     const q = HF.q.toLowerCase();
-    list = list.filter(s => [s.codigo_pneu, s.motivo_label, s.nota_numero, s.identificador_por, s.created_by_nome, s.saida_nota_numero, s.filial]
+    list = list.filter(s => [...normItens(s).map(it=>it.codigo), s.motivo_label, s.nota_numero, s.entrada_ref_nota, s.identificador_por, s.created_by_nome, s.saida_nota_numero, s.filial, s.observacao]
       .filter(Boolean).some(x => String(x).toLowerCase().includes(q)));
   }
   return list;
@@ -1460,11 +1795,11 @@ function viewHistorico(){
     </div>`;
   let body;
   if(!list.length) body = emptyState("Nenhum registro", "Nenhuma solicitação corresponde aos filtros.");
-  else if(HF.group === "none") body = solsTableCard(list, { solicitante: admin, status:true, nota:true });
+  else if(HF.group === "none") body = solsTableCard(list, { solicitante: admin, status:true, nota:true, obs:true });
   else {
     const keyer = HF.group === "filial" ? (s => s.filial || "— Sem filial") : (s => s.created_by_nome || "— Sem responsável");
     body = groupBy(list, keyer).map(([name, rows]) =>
-      `<div class="card" style="margin-bottom:14px"><div class="card-head"><h3>${esc(name)}</h3><span class="cnt">${rows.length} registro(s) · ${rows.filter(r => r.status === "pendente").length} pend.</span></div><div class="tbl-wrap">${tableOnly(rows, { solicitante: HF.group !== "user" && admin, status:true, nota:true })}</div></div>`
+      `<div class="card" style="margin-bottom:14px"><div class="card-head"><h3>${esc(name)}</h3><span class="cnt">${rows.length} registro(s) · ${rows.filter(r => r.status === "pendente").length} pend.</span></div><div class="tbl-wrap">${tableOnly(rows, { solicitante: HF.group !== "user" && admin, status:true, nota:true, obs:true })}</div></div>`
     ).join("");
   }
   const count = `<div class="muted" style="margin:2px 0 14px;font-size:12.5px">${list.length} registro(s)</div>`;
@@ -1480,28 +1815,31 @@ function wireHistorico(){
   $("#btnXLS") && $("#btnXLS").addEventListener("click", exportExcel);
 }
 function histExportRows(list){
-  return list.map(s => ({
-    "Data/Hora": fmtDateTime(s.created_at),
-    "Filial": s.filial || "",
-    "Movimentação": movLabel(s.movimentacao),
-    "Código do pneu": s.codigo_pneu || "",
-    "Quantidade": s.quantidade,
-    "Motivo": s.motivo_label || "",
-    "Identificado por": s.identificador_por || "",
-    "Solicitante": s.created_by_nome || "",
-    "Status": (STATUS[s.status] || {}).label || s.status,
-    "Nota": s.nota_numero || "",
-    "Concluído em": s.concluido_at ? fmtDateTime(s.concluido_at) : "",
-    "Concluído por": s.concluido_by_nome || "",
-    "Recusada por": s.recusa_by_nome || "",
-    "Motivo da recusa": s.recusa_motivo || "",
-    "Requer saída": (s.movimentacao === "entrada" && s.requer_saida) ? "Sim" : "Não",
-    "Prazo (dias)": s.requer_saida ? (s.prazo_dias || "") : "",
-    "Saída resolvida": s.requer_saida ? (s.saida_resolvida ? "Sim" : "Não") : "",
-    "Nota de saída": s.saida_nota_numero || "",
-    "Saída registrada em": s.saida_resolvida_at ? fmtDateTime(s.saida_resolvida_at) : "",
-    "Observação": s.observacao || ""
-  }));
+  return list.map(s => {
+    const its = normItens(s);
+    const saldo = (s.movimentacao === "entrada" && s.requer_saida) ? saldoEntrada(s) : null;
+    return {
+      "Data/Hora": fmtDateTime(s.created_at),
+      "Filial": s.filial || "",
+      "Movimentação": movLabel(s.movimentacao),
+      "Itens (código × qtd)": its.map(it => `${it.codigo} ×${it.quantidade}`).join(" | "),
+      "Qtd total": solQtdTotal(s),
+      "Motivo": s.motivo_label || "",
+      "Identificado por": s.identificador_por || "",
+      "Solicitante": s.created_by_nome || "",
+      "Status": (STATUS[s.status] || {}).label || s.status,
+      "Nota": s.nota_numero || "",
+      "Nota de entrada (origem)": s.entrada_ref_nota || "",
+      "Concluído em": s.concluido_at ? fmtDateTime(s.concluido_at) : "",
+      "Concluído por": s.concluido_by_nome || "",
+      "Recusada por": s.recusa_by_nome || "",
+      "Motivo da recusa": s.recusa_motivo || "",
+      "Requer saída": (s.movimentacao === "entrada" && s.requer_saida) ? "Sim" : "Não",
+      "Prazo (dias)": s.requer_saida ? (s.prazo_dias || "") : "",
+      "Saldo pendente saída": saldo ? saldo.saldoTotal : "",
+      "Observação": s.observacao || s.conclusao_observacao || ""
+    };
+  });
 }
 function exportExcel(){
   const rows = histExportRows(histFilter());
@@ -1549,6 +1887,21 @@ function viewConfig(){
       <div class="cfg-list">${c.motivos_saida.map((m,i) => `<div class="cfg-item"><input class="ctrl ms-label" data-i="${i}" value="${esc(m.label)}" style="flex:1"><button class="ci-del" data-del-ms="${i}" title="Remover">${ICONS.trash}</button></div>`).join("")}</div>
       <div class="wrap-actions" style="margin-top:12px"><input class="ctrl" id="newMS" placeholder="Novo motivo de saída" style="flex:1"><button class="btn btn-ghost" id="addMS">${ICONS.plus} Adicionar</button></div>
     </div></div>`;
+  const itensCad = cfgEdit.itens_cadastrados || (cfgEdit.itens_cadastrados = []);
+  const itensCard = `<div class="card" style="margin-bottom:16px"><div class="card-head"><h3>Itens cadastrados (pneus)</h3><span class="cnt">${itensCad.length} · usados na lista suspensa de “Código do pneu”</span></div><div class="card-pad">
+      <div class="hint" style="margin-bottom:12px">Cadastre os pneus por <b>código</b> e <b>descrição</b>. Quando houver itens aqui, os usuários só poderão escolher itens desta lista ao abrir uma solicitação (evita erro de digitação). Sem itens cadastrados, o campo aceita texto livre.</div>
+      <div class="cfg-list" id="itensCadList">${itensCad.map((it,i) => `<div class="cfg-item">
+          <input class="ctrl ic-code" data-i="${i}" value="${esc(it.codigo||"")}" placeholder="Código (ex.: 295/80R22.5 Comforser CF300)" style="flex:1.2;min-width:0">
+          <input class="ctrl ic-desc" data-i="${i}" value="${esc(it.descricao||"")}" placeholder="Descrição (ex.: Borrachudo tração)" style="flex:1;min-width:0">
+          <button class="ci-del" data-del-item="${i}" title="Remover">${ICONS.trash}</button>
+        </div>`).join("") || `<div class="t-sub">Nenhum item cadastrado ainda.</div>`}</div>
+      <div class="wrap-actions" style="margin-top:12px"><input class="ctrl" id="newItemCode" placeholder="Código do pneu" style="flex:1.2"><input class="ctrl" id="newItemDesc" placeholder="Descrição (opcional)" style="flex:1"><button class="btn btn-ghost" id="addItemCad">${ICONS.plus} Adicionar</button></div>
+      <details style="margin-top:14px"><summary style="cursor:pointer;font-weight:600;font-size:13px;color:var(--ice-d)">Importar vários (colar lista)</summary>
+        <div class="hint" style="margin:8px 0">Cole uma linha por item, no formato <code>código;descrição</code> (a descrição é opcional). Itens com código repetido são ignorados.</div>
+        <textarea class="ctrl" id="bulkItens" placeholder="295/80R22.5 Comforser CF300;Borrachudo&#10;275/80R22.5 Aderenza;Liso direcional" style="min-height:96px"></textarea>
+        <div class="wrap-actions" style="justify-content:flex-end;margin-top:8px"><button class="btn btn-ghost btn-sm" id="bulkImportItens">${ICONS.download} Importar lista</button></div>
+      </details>
+    </div></div>`;
   const gerais = `<div class="card" style="margin-bottom:16px"><div class="card-head"><h3>Alertas & som</h3></div><div class="card-pad">
       <div class="grid-2">
         <div class="field"><label>Prazo padrão (dias)</label><input type="number" min="1" class="ctrl" id="prazoPadrao" value="${c.prazo_padrao_dias || 15}"><div class="hint">Usado quando um motivo não tem prazo próprio.</div></div>
@@ -1557,10 +1910,38 @@ function viewConfig(){
     </div></div>`;
   const head = `<div class="page-head"><div><div class="crumb">Administração</div><h1>Configurações</h1><p class="lead">Filiais, motivos de entrada e saída, prazos de alerta e som de notificação.</p></div>
       <button class="btn btn-primary" id="btnSaveCfg">${ICONS.check} Salvar configurações</button></div>`;
-  return `<div class="page">${head}${filiaisCard}${meCard}${msCard}${gerais}</div>`;
+  return `<div class="page">${head}${filiaisCard}${itensCard}${meCard}${msCard}${gerais}</div>`;
 }
 function reRenderConfig(){ $("#view").innerHTML = viewConfig(); wireConfig(); }
 function wireConfig(){
+  if(!cfgEdit.itens_cadastrados) cfgEdit.itens_cadastrados = [];
+  // itens cadastrados
+  $$("#view .ic-code").forEach(inp => inp.addEventListener("input", () => { cfgEdit.itens_cadastrados[+inp.dataset.i].codigo = inp.value; }));
+  $$("#view .ic-desc").forEach(inp => inp.addEventListener("input", () => { cfgEdit.itens_cadastrados[+inp.dataset.i].descricao = inp.value; }));
+  $$("#view [data-del-item]").forEach(b => b.addEventListener("click", () => { cfgEdit.itens_cadastrados.splice(+b.dataset.delItem, 1); reRenderConfig(); }));
+  $("#addItemCad") && $("#addItemCad").addEventListener("click", () => {
+    const code = $("#newItemCode").value.trim(); if(!code){ toast({ kind:"danger", title:"Informe o código" }); return; }
+    if(cfgEdit.itens_cadastrados.some(i => String(i.codigo).trim().toLowerCase() === code.toLowerCase())){ toast({ kind:"danger", title:"Código já cadastrado" }); return; }
+    cfgEdit.itens_cadastrados.push({ codigo: code, descricao: $("#newItemDesc").value.trim() });
+    reRenderConfig();
+  });
+  $("#bulkImportItens") && $("#bulkImportItens").addEventListener("click", () => {
+    const txt = $("#bulkItens").value || "";
+    const existentes = new Set(cfgEdit.itens_cadastrados.map(i => String(i.codigo).trim().toLowerCase()));
+    let add = 0;
+    txt.split(/\r?\n/).forEach(linha => {
+      const l = linha.trim(); if(!l) return;
+      const [code, ...rest] = l.split(/[;\t]/);
+      const codigo = (code||"").trim(); if(!codigo) return;
+      if(existentes.has(codigo.toLowerCase())) return;
+      existentes.add(codigo.toLowerCase());
+      cfgEdit.itens_cadastrados.push({ codigo, descricao: rest.join(";").trim() });
+      add++;
+    });
+    if(add){ toast({ kind:"ok", title:`${add} item(ns) importado(s)`, msg:"Revise e salve as configurações." }); reRenderConfig(); }
+    else toast({ kind:"danger", title:"Nada para importar", msg:"Confira o formato código;descrição." });
+  });
+
   $$("#view .ci-nm-input").forEach(inp => inp.addEventListener("input", () => { cfgEdit.filiais[+inp.dataset.i] = inp.value; }));
   $$("#view [data-del-filial]").forEach(b => b.addEventListener("click", () => { cfgEdit.filiais.splice(+b.dataset.delFilial, 1); reRenderConfig(); }));
   $("#addFilial") && $("#addFilial").addEventListener("click", () => { const v = $("#newFilial").value.trim(); if(!v) return; cfgEdit.filiais.push(v); reRenderConfig(); });
@@ -1595,6 +1976,11 @@ function wireConfig(){
 }
 async function saveCfg(){
   cfgEdit.filiais = cfgEdit.filiais.map(f => String(f).trim()).filter(Boolean);
+  cfgEdit.itens_cadastrados = (cfgEdit.itens_cadastrados || [])
+    .map(i => ({ codigo: String(i.codigo||"").trim(), descricao: String(i.descricao||"").trim() }))
+    .filter(i => i.codigo);
+  // remove códigos duplicados (mantém o primeiro)
+  { const seen = new Set(); cfgEdit.itens_cadastrados = cfgEdit.itens_cadastrados.filter(i => { const k = i.codigo.toLowerCase(); if(seen.has(k)) return false; seen.add(k); return true; }); }
   cfgEdit.motivos_entrada = cfgEdit.motivos_entrada.filter(m => m.label && m.label.trim())
     .map(m => ({ id: m.id || uniqueId(slug(m.label), []), label: m.label.trim(), requer_saida: !!m.requer_saida, prazo_dias: m.requer_saida ? (m.prazo_dias || cfgEdit.prazo_padrao_dias || 15) : 0 }));
   cfgEdit.motivos_saida = cfgEdit.motivos_saida.filter(m => m.label && m.label.trim())
@@ -1684,33 +2070,48 @@ function closeModal(){
   setTimeout(maybeRerender, 60);
 }
 
+/* Helpers de exibição de itens nos modais */
+function itensKvHTML(s){
+  const its = normItens(s);
+  if(!its.length) return `<dt>Itens</dt><dd>—</dd>`;
+  return `<dt>Itens (${its.length})</dt><dd>${its.map(it => `<div>${esc(it.codigo)}${it.descricao?` <span class="t-sub">(${esc(it.descricao)})</span>`:""} · <b>${it.quantidade}×</b></div>`).join("")}</dd>`;
+}
+function saldoDetailHTML(s){
+  if(!(s.movimentacao === "entrada" && s.requer_saida)) return "";
+  const sal = saldoEntrada(s);
+  return `<dt>Saldo p/ saída</dt><dd>${sal.itens.map(it => `<div>${esc(it.codigo)} · baixado ${it.consumido}/${it.original} · <b style="color:${it.saldo>0?"var(--orange-d)":"var(--ok)"}">${it.saldo} pendente</b></div>`).join("")}</dd>`;
+}
+
 async function openDetail(id){
   let s; try{ s = await Backend.getSol(id); }catch(e){ toast({ kind:"danger", title:"Erro ao abrir", msg:(e&&e.message)||String(e) }); return; }
   if(!s){ toast({ kind:"danger", title:"Solicitação não encontrada" }); return; }
   const admin = state.user.role === "admin";
   const ov = overdueInfo(s);
+  const saldoTotal = (s.movimentacao === "entrada" && s.requer_saida) ? saldoEntrada(s).saldoTotal : 0;
   const st = STATUS[s.status] || STATUS.pendente;
   const headerBadges = `${movBadge(s.movimentacao)} <span class="badge ${st.cls}"><span class="b-dot"></span>${st.label}</span>`
     + (ov.state === "danger" ? ` <span class="badge b-danger"><span class="b-dot"></span>Saída vencida</span>` : ov.state === "warn" ? ` <span class="badge b-warn"><span class="b-dot"></span>Saída a vencer</span>` : "");
   const kv = `<dl class="kv">
       <dt>Filial</dt><dd>${esc(s.filial || "—")}</dd>
-      <dt>Código do pneu</dt><dd>${esc(s.codigo_pneu)}</dd>
-      <dt>Quantidade</dt><dd>${s.quantidade}</dd>
+      ${itensKvHTML(s)}
+      <dt>Qtd total</dt><dd>${solQtdTotal(s)}</dd>
       <dt>Motivo</dt><dd>${esc(s.motivo_label)}</dd>
       <dt>Identificado por</dt><dd>${esc(s.identificador_por || "—")}</dd>
       <dt>Solicitante</dt><dd>${esc(s.created_by_nome || "—")}</dd>
       <dt>Criada em</dt><dd>${fmtDateTime(s.created_at)}</dd>
       ${s.nota_numero ? `<dt>Nota emitida</dt><dd>${esc(s.nota_numero)}</dd>` : ""}
+      ${s.entrada_ref_nota ? `<dt>NF de entrada (origem)</dt><dd>${esc(s.entrada_ref_nota)}</dd>` : ""}
       ${(s.movimentacao === "entrada" && s.requer_saida) ? `<dt>Requer saída</dt><dd>Sim · prazo ${s.prazo_dias || state.config.prazo_padrao_dias} dias</dd>` : ""}
-      ${s.saida_resolvida ? `<dt>Nota de saída</dt><dd>${esc(s.saida_nota_numero || "—")}</dd>` : ""}
+      ${saldoDetailHTML(s)}
       ${s.status === "recusado" && s.recusa_motivo ? `<dt>Motivo da recusa</dt><dd>${esc(s.recusa_motivo)}</dd>` : ""}
-      ${s.observacao ? `<dt>Observação</dt><dd>${esc(s.observacao)}</dd>` : ""}
+      ${s.observacao ? `<dt>Observação</dt><dd style="white-space:pre-wrap">${esc(s.observacao)}</dd>` : ""}
+      ${s.conclusao_observacao ? `<dt>Obs. da conclusão</dt><dd style="white-space:pre-wrap">${esc(s.conclusao_observacao)}</dd>` : ""}
     </dl>`;
   let alert = "";
-  if(s.status === "concluido" && s.requer_saida && !s.saida_resolvida){
+  if(s.status === "concluido" && s.requer_saida && saldoTotal > 0){
     const cls = ov.state === "danger" ? "danger" : ov.state === "warn" ? "warn" : "info";
     const txt = ov.state === "danger" ? `Saída vencida há ${Math.abs(ov.restante)} dia(s).` : ov.state === "warn" ? `Faltam ${ov.restante} dia(s) para o prazo.` : `Dentro do prazo (${ov.restante} dia(s) restantes).`;
-    alert = `<div class="alert-box ${cls}">${ICONS.alert}<div><div class="ab-t">Pendência de saída</div><div class="ab-m">${txt} Registre a nota de saída para encerrar.</div></div></div>`;
+    alert = `<div class="alert-box ${cls}">${ICONS.alert}<div><div class="ab-t">Pendência de saída · ${saldoTotal} un.</div><div class="ab-m">${txt} Registre a nota de saída (total ou parcial) para abater o saldo.</div></div></div>`;
   }
   if(s.status === "recusado"){
     alert += `<div class="alert-box danger">${ICONS.x}<div><div class="ab-t">Solicitação recusada</div><div class="ab-m">${esc(s.recusa_motivo || "Sem motivo informado.")}${s.recusa_by_nome ? " · por " + esc(s.recusa_by_nome) : ""}</div></div></div>`;
@@ -1725,7 +2126,7 @@ async function openDetail(id){
     if(s.status === "pendente")
       actions = `<button class="btn btn-danger-ghost" data-recusar="${s.id}">${ICONS.x} Recusar</button><button class="btn btn-ok" data-conclude="${s.id}">${ICONS.check} Concluir (emitir nota)</button>` + actions;
     else if(s.status === "concluido"){
-      if(s.requer_saida && !s.saida_resolvida)
+      if(s.requer_saida && saldoTotal > 0)
         actions = `<button class="btn btn-ghost" data-reabrir="${s.id}">Reabrir</button><button class="btn btn-ok" data-saida="${s.id}">${ICONS.check} Registrar saída</button>` + actions;
       else
         actions = `<button class="btn btn-ghost" data-reabrir="${s.id}">Reabrir</button>` + actions;
@@ -1734,7 +2135,7 @@ async function openDetail(id){
       actions = `<button class="btn btn-ghost" data-reabrir="${s.id}">Reabrir</button>` + actions;
   }
   openModal(
-    `<div class="m-head"><div><div style="margin-bottom:8px">${headerBadges}</div><h3>${esc(s.codigo_pneu)} · ${s.quantidade}×</h3></div><button class="x" data-close>${ICONS.x}</button></div>
+    `<div class="m-head"><div><div style="margin-bottom:8px">${headerBadges}</div><h3>${esc(solCodigoResumo(s))} · ${solQtdTotal(s)}×</h3></div><button class="x" data-close>${ICONS.x}</button></div>
      <div class="m-body">${alert}${kv}<div class="display" style="font-size:12px;color:var(--muted);margin:18px 0 8px">Linha do tempo</div><div class="timeline">${tl}</div></div>
      <div class="m-foot">${actions}</div>`
   );
@@ -1749,13 +2150,15 @@ async function openConcluir(id){
   let s; try{ s = await Backend.getSol(id); }catch(e){ return; }
   if(!s) return;
   const isEntrada = s.movimentacao === "entrada";
+  const obsOrig = s.observacao || "";
   openModal(
     `<div class="m-head"><div><div style="margin-bottom:8px">${movBadge(s.movimentacao)}</div><h3>Concluir — emitir nota</h3></div><button class="x" data-close>${ICONS.x}</button></div>
      <div class="m-body">
-       <dl class="kv" style="margin-bottom:16px"><dt>Filial</dt><dd>${esc(s.filial)}</dd><dt>Pneu</dt><dd>${esc(s.codigo_pneu)} · ${s.quantidade}×</dd><dt>Motivo</dt><dd>${esc(s.motivo_label)}</dd></dl>
+       <dl class="kv" style="margin-bottom:16px"><dt>Filial</dt><dd>${esc(s.filial)}</dd>${itensKvHTML(s)}<dt>Motivo</dt><dd>${esc(s.motivo_label)}</dd>${s.entrada_ref_nota?`<dt>NF de entrada (origem)</dt><dd>${esc(s.entrada_ref_nota)}</dd>`:""}</dl>
        <div class="field"><label>Número da nota de ${isEntrada ? "entrada" : "saída"} <span class="req">*</span></label><input class="ctrl" id="cNota" placeholder="Ex.: NF 12345" autocomplete="off"></div>
-       <div class="field"><label>Observação</label><textarea class="ctrl" id="cObs" placeholder="Opcional"></textarea></div>
+       <div class="field"><label>Observação</label><textarea class="ctrl" id="cObs" placeholder="Opcional">${esc(obsOrig)}</textarea>${obsOrig?`<div class="hint">Observação trazida da solicitação. Edite se necessário — ela fica registrada na conclusão.</div>`:""}</div>
        ${(isEntrada && s.requer_saida) ? `<div class="alert-box info">${ICONS.info}<div><div class="ab-t">Gera pendência de saída</div><div class="ab-m">Após concluir, o pneu entrará na lista de saídas pendentes com prazo de ${s.prazo_dias || state.config.prazo_padrao_dias} dias.</div></div></div>` : ""}
+       ${(!isEntrada && s.entrada_ref_id) ? `<div class="alert-box info">${ICONS.info}<div><div class="ab-t">Vinculada a uma entrada</div><div class="ab-m">Ao concluir, esta saída abate o saldo da NF de entrada ${esc(s.entrada_ref_nota||"")} e sai automaticamente das Saídas pendentes.</div></div></div>` : ""}
      </div>
      <div class="m-foot"><button class="btn btn-ghost" data-close>Cancelar</button><button class="btn btn-ok" id="cDo">${ICONS.check} Confirmar conclusão</button></div>`
   );
@@ -1771,15 +2174,32 @@ async function openConcluir(id){
   });
 }
 
+/* Registrar saída a partir de uma ENTRADA pendente: cria um registro de SAÍDA (aparece no histórico)
+   vinculado à entrada, abatendo o saldo (total ou parcial). */
 async function openSaida(id){
   let s; try{ s = await Backend.getSol(id); }catch(e){ return; }
   if(!s) return;
+  const sal = saldoEntrada(s);
+  const pend = sal.itens.filter(it => it.saldo > 0);
+  if(!pend.length){ toast({ kind:"ok", title:"Sem saldo", msg:"Esta entrada já teve toda a saída registrada." }); return; }
+  const motivosSaida = state.config.motivos_saida || [];
+  const itensRows = pend.map((it,i) => `
+      <div class="item-row" data-i="${i}" data-code="${esc(it.codigo)}" style="grid-template-columns:24px 1fr 120px">
+        <label class="switch" style="margin-top:9px"><input type="checkbox" class="sx-on" data-i="${i}" checked><span class="sl"></span></label>
+        <div><div class="t-code">${esc(it.codigo)}</div><div class="item-desc">${esc(it.descricao||"")} · saldo ${it.saldo}</div></div>
+        <input type="number" min="1" max="${it.saldo}" step="1" class="ctrl sx-qty" data-i="${i}" value="${it.saldo}">
+      </div>`).join("");
   openModal(
-    `<div class="m-head"><div><div style="margin-bottom:8px">${movBadge(s.movimentacao)}</div><h3>Registrar saída (baixa)</h3></div><button class="x" data-close>${ICONS.x}</button></div>
+    `<div class="m-head"><div><div style="margin-bottom:8px">${movBadge("saida")}</div><h3>Registrar saída (baixa)</h3></div><button class="x" data-close>${ICONS.x}</button></div>
      <div class="m-body">
-       <dl class="kv" style="margin-bottom:16px"><dt>Filial</dt><dd>${esc(s.filial)}</dd><dt>Pneu</dt><dd>${esc(s.codigo_pneu)} · ${s.quantidade}×</dd><dt>Entrada (nota)</dt><dd>${esc(s.nota_numero || "—")}</dd><dt>Motivo</dt><dd>${esc(s.motivo_label)}</dd></dl>
-       <div class="field"><label>Número da nota de saída <span class="req">*</span></label><input class="ctrl" id="sNota" placeholder="Ex.: NF 67890" autocomplete="off"></div>
+       <dl class="kv" style="margin-bottom:16px"><dt>Filial</dt><dd>${esc(s.filial)}</dd><dt>NF de entrada</dt><dd>${esc(s.nota_numero || "—")}</dd><dt>Motivo entrada</dt><dd>${esc(s.motivo_label)}</dd></dl>
+       <div class="field"><label>Itens a dar saída <span class="req">*</span><div class="hint">Desmarque o que não vai sair e ajuste a quantidade para baixa parcial.</div></label>${itensRows}</div>
+       <div class="grid-2">
+         <div class="field"><label>Número da nota de saída <span class="req">*</span></label><input class="ctrl" id="sNota" placeholder="Ex.: NF 67890" autocomplete="off"></div>
+         <div class="field"><label>Motivo da saída</label><select class="ctrl" id="sMotivo">${motivosSaida.map(m=>`<option value="${esc(m.id)}">${esc(m.label)}</option>`).join("")}</select></div>
+       </div>
        <div class="field"><label>Observação</label><textarea class="ctrl" id="sObs" placeholder="Opcional"></textarea></div>
+       <div class="alert-box info">${ICONS.info}<div><div class="ab-t">Vira histórico de saída</div><div class="ab-m">Esta baixa é registrada como uma <b>saída</b> no histórico, vinculada à NF de entrada ${esc(s.nota_numero||"")}. O saldo restante continua nas Saídas pendentes.</div></div></div>
      </div>
      <div class="m-foot"><button class="btn btn-ghost" data-close>Cancelar</button><button class="btn btn-ok" id="sDo">${ICONS.check} Confirmar saída</button></div>`
   );
@@ -1787,10 +2207,35 @@ async function openSaida(id){
   $("#sDo").addEventListener("click", async () => {
     const nota = $("#sNota").value.trim();
     if(!nota){ toast({ kind:"danger", title:"Informe a nota de saída" }); $("#sNota").focus(); return; }
+    const itens = [];
+    $$("#modal .item-row").forEach(row => {
+      const i = +row.dataset.i;
+      const on = row.querySelector(".sx-on").checked;
+      if(!on) return;
+      const code = row.dataset.code;
+      const li = pend.find(p => p.codigo === code);
+      const q = Math.max(1, parseInt(row.querySelector(".sx-qty").value,10)||0);
+      if(q > 0) itens.push({ codigo: code, descricao: (findItemCad(code)?.descricao)||(li?li.descricao:"")||"", quantidade: Math.min(q, li?li.saldo:q) });
+    });
+    if(!itens.length){ toast({ kind:"danger", title:"Selecione ao menos um item" }); return; }
+    const motivoId = $("#sMotivo") ? $("#sMotivo").value : "";
+    const motivo = motivosSaida.find(m => m.id === motivoId) || { id:"baixa", label:"Saída / baixa" };
+    const obs = $("#sObs").value.trim();
+    const total = itens.reduce((a,it)=>a+it.quantidade,0);
     const btn = $("#sDo"); btn.disabled = true;
     try{
-      await Backend.resolverSaida(id, { saida_nota_numero: nota, observacao: $("#sObs").value.trim(), user: state.user });
-      closeModal(); toast({ kind:"ok", title:"Saída registrada", msg:"Pendência encerrada." }); await refresh();
+      const rec = await Backend.createSolicitacao({
+        created_by: state.user.id, created_by_nome: state.user.nome,
+        filial: s.filial, movimentacao: "saida",
+        itens, codigo_pneu: itens[0].codigo, quantidade: total,
+        motivo_id: motivo.id, motivo_label: motivo.label,
+        requer_saida: false, prazo_dias: 0,
+        identificador_por: state.user.nome,
+        observacao: obs || `Baixa da NF de entrada ${s.nota_numero || ""}`,
+        entrada_ref_id: s.id, entrada_ref_nota: s.nota_numero || null
+      });
+      await Backend.concluir(rec.id, { nota_numero: nota, observacao: obs || null, user: state.user });
+      closeModal(); toast({ kind:"ok", title:"Saída registrada", msg:`${total} un. baixada(s) da NF ${s.nota_numero||""}.` }); await refresh();
     }catch(e){ btn.disabled = false; toast({ kind:"danger", title:"Erro ao registrar saída", msg:(e&&e.message)||String(e) }); }
   });
 }
@@ -1801,7 +2246,7 @@ async function openRecusar(id){
   openModal(
     `<div class="m-head"><div><div style="margin-bottom:8px">${movBadge(s.movimentacao)}</div><h3>Recusar solicitação</h3></div><button class="x" data-close>${ICONS.x}</button></div>
      <div class="m-body">
-       <dl class="kv" style="margin-bottom:16px"><dt>Filial</dt><dd>${esc(s.filial)}</dd><dt>Pneu</dt><dd>${esc(s.codigo_pneu)} · ${s.quantidade}×</dd><dt>Solicitante</dt><dd>${esc(s.created_by_nome || "—")}</dd></dl>
+       <dl class="kv" style="margin-bottom:16px"><dt>Filial</dt><dd>${esc(s.filial)}</dd>${itensKvHTML(s)}<dt>Solicitante</dt><dd>${esc(s.created_by_nome || "—")}</dd></dl>
        <p class="muted" style="margin-bottom:14px">A solicitação não gerará nota e ficará registrada como recusada. O motivo fica visível no histórico para o solicitante.</p>
        <div class="field"><label>Motivo da recusa <span class="req">*</span></label><textarea class="ctrl" id="rMotivo" placeholder="Ex.: pneu localizado no físico; pedido duplicado; código incorreto…"></textarea></div>
      </div>
