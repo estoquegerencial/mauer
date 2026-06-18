@@ -110,7 +110,7 @@
   .card-head{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px}
   .card-head h3{font-family:var(--font-display);text-transform:uppercase;letter-spacing:.04em;font-size:14px;font-weight:700}
   .card-head .cnt{font-size:12px;color:var(--muted);font-weight:500}
-  .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:var(--r);font-weight:600;font-size:13.5px;transition:.14s;border:1.5px solid transparent;white-space:nowrap}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:var(--r);font-weight:600;font-size:13.5px;transition:background .14s,border-color .14s,color .14s,filter .14s;border:1.5px solid transparent;white-space:nowrap}
   .btn svg{width:16px;height:16px}
   .btn-primary{background:var(--orange);color:#fff}
   .btn-primary:hover{background:var(--orange-d)}
@@ -138,8 +138,8 @@
   .seg{display:inline-flex;background:var(--surface-2);border:1.5px solid var(--line-strong);border-radius:var(--r);padding:3px;gap:3px}
   .seg button{padding:9px 16px;border-radius:7px;font-weight:600;font-size:13px;color:var(--muted);transition:.13s}
   .seg button.on{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
-  .seg.io button.on[data-v="entrada"]{color:var(--ok);box-shadow:0 0 0 1.5px var(--ok) inset}
-  .seg.io button.on[data-v="saida"]{color:var(--orange-d);box-shadow:0 0 0 1.5px var(--orange) inset}
+  .seg.io button.on[data-v="entrada"]{color:var(--danger);box-shadow:0 0 0 1.5px var(--danger) inset}
+  .seg.io button.on[data-v="saida"]{color:var(--ok);box-shadow:0 0 0 1.5px var(--ok) inset}
   .badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:30px;font-size:11.5px;font-weight:700}
   .badge .b-dot{width:6px;height:6px;border-radius:50%;background:currentColor}
   .b-ok{background:var(--ok-bg);color:var(--ok)}
@@ -147,8 +147,8 @@
   .b-danger{background:var(--danger-bg);color:var(--danger)}
   .b-info{background:var(--info-bg);color:var(--info)}
   .b-neutral{background:var(--gray);color:var(--muted)}
-  .b-in{background:#e7f4ec;color:var(--ok)}
-  .b-out{background:#fdf0e0;color:var(--orange-d)}
+  .b-in{background:var(--danger-bg);color:var(--danger)}
+  .b-out{background:var(--ok-bg);color:var(--ok)}
   .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
   .kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px 18px;box-shadow:var(--shadow);position:relative;overflow:hidden}
   .kpi .ic{position:absolute;right:14px;top:14px;width:34px;height:34px;border-radius:9px;display:grid;place-items:center}
@@ -194,9 +194,9 @@
   .grp .bar-row .n{width:26px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
 
   /* ====== MODAL ====== */
-  .scrim{position:fixed;inset:0;background:rgba(12,21,40,.55);backdrop-filter:blur(2px);z-index:60;display:none;opacity:0;transition:opacity .18s}
+  .scrim{position:fixed;inset:0;background:rgba(12,21,40,.62);z-index:60;display:none;opacity:0;transition:opacity .18s}
   .scrim.on{display:block;opacity:1}
-  .modal{position:fixed;z-index:61;top:50%;left:50%;transform:translate(-50%,-46%);width:min(580px,calc(100% - 32px));max-height:90vh;overflow:auto;background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--shadow-lg);opacity:0;transition:.2s;pointer-events:none}
+  .modal{position:fixed;z-index:61;top:50%;left:50%;transform:translate(-50%,-46%);width:min(580px,calc(100% - 32px));max-height:90vh;overflow:auto;background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--shadow-lg);opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;backface-visibility:hidden}
   .modal.on{opacity:1;transform:translate(-50%,-50%);pointer-events:auto}
   .modal .m-head{padding:20px 22px 14px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;gap:12px}
   .modal .m-head h3{font-family:var(--font-display);text-transform:uppercase;letter-spacing:.03em;font-size:17px;font-weight:800}
@@ -207,6 +207,24 @@
   .kv{display:grid;grid-template-columns:132px 1fr;gap:9px 14px;font-size:13px;margin-bottom:6px}
   .kv dt{color:var(--muted);font-weight:600}
   .kv dd{font-weight:600;color:var(--ink)}
+  /* ---- Itens e quantidade nos modais (leitura clara) ---- */
+  .mi-line{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px dashed var(--line)}
+  .mi-line:last-child{border-bottom:none}
+  .mi-line .mi-code{font-weight:700;font-family:var(--font-display);letter-spacing:.02em;font-size:13.5px;color:var(--ink)}
+  .mi-line .mi-desc{font-size:11.5px;color:var(--muted);margin-top:1px}
+  .qty-chip{display:inline-flex;align-items:center;gap:6px;background:var(--surface-2);border:1px solid var(--line-strong);border-radius:9px;padding:4px 11px;flex:none}
+  .qty-chip .qc-lab{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700}
+  .qty-chip .qc-val{font-family:var(--font-display);font-weight:800;font-size:16px;font-variant-numeric:tabular-nums;color:var(--ink);line-height:1}
+  .qty-chip.ok .qc-val{color:var(--ok)}
+  .qty-chip.warn .qc-val{color:var(--orange-d)}
+  /* linha de baixa (registrar saída) */
+  .sx-row{display:grid;grid-template-columns:46px 1fr 96px;gap:12px;align-items:center;padding:12px 0;border-bottom:1px dashed var(--line)}
+  .sx-row:last-child{border-bottom:none}
+  .sx-row.off{opacity:.45}
+  .sx-info{min-width:0}
+  .sx-qtybox{text-align:center}
+  .sx-qtybox label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700;margin-bottom:4px}
+  .sx-qtybox input{text-align:center;font-weight:800;font-family:var(--font-display);font-size:15px;padding:9px 6px}
   .timeline{position:relative;padding-left:22px;margin-top:6px}
   .timeline::before{content:"";position:absolute;left:6px;top:4px;bottom:4px;width:2px;background:var(--line)}
   .tl-item{position:relative;padding:0 0 16px}
@@ -1688,8 +1706,8 @@ function viewFila(){
     </div><button class="btn btn-primary" data-go="nova">${ICONS.nova} Nova solicitação</button></div>`;
   const kpis = `<div class="kpis">
       ${kpi("Pendentes", list.length, ICONS.fila, list.length ? "warn" : "info")}
-      ${kpi("Entradas", entradas, ICONS.arrowDown, "ok")}
-      ${kpi("Saídas", saidas, ICONS.arrowUp, "orange")}
+      ${kpi("Entradas", entradas, ICONS.arrowDown, "danger")}
+      ${kpi("Saídas", saidas, ICONS.arrowUp, "ok")}
       ${kpiAccent("Mais antiga", oldest ? relTime(oldest.created_at) : "—", oldest ? fmtDate(oldest.created_at) : "sem pendências")}
     </div>`;
   const body = list.length
@@ -2074,7 +2092,12 @@ function closeModal(){
 function itensKvHTML(s){
   const its = normItens(s);
   if(!its.length) return `<dt>Itens</dt><dd>—</dd>`;
-  return `<dt>Itens (${its.length})</dt><dd>${its.map(it => `<div>${esc(it.codigo)}${it.descricao?` <span class="t-sub">(${esc(it.descricao)})</span>`:""} · <b>${it.quantidade}×</b></div>`).join("")}</dd>`;
+  const linhas = its.map(it => `<div class="mi-line">
+      <div style="min-width:0"><div class="mi-code">${esc(it.codigo)}</div>${it.descricao?`<div class="mi-desc">${esc(it.descricao)}</div>`:""}</div>
+      <span class="qty-chip"><span class="qc-lab">Qtd</span><span class="qc-val">${it.quantidade}</span></span>
+    </div>`).join("");
+  const totalLinha = its.length > 1 ? `<div class="mi-line" style="border-top:1.5px solid var(--line-strong);border-bottom:none;padding-top:9px"><div class="mi-code">Total</div><span class="qty-chip"><span class="qc-lab">Qtd</span><span class="qc-val">${solQtdTotal(s)}</span></span></div>` : "";
+  return `<dt>${its.length>1?`Itens (${its.length})`:"Item"}</dt><dd>${linhas}${totalLinha}</dd>`;
 }
 function saldoDetailHTML(s){
   if(!(s.movimentacao === "entrada" && s.requer_saida)) return "";
@@ -2184,10 +2207,17 @@ async function openSaida(id){
   if(!pend.length){ toast({ kind:"ok", title:"Sem saldo", msg:"Esta entrada já teve toda a saída registrada." }); return; }
   const motivosSaida = state.config.motivos_saida || [];
   const itensRows = pend.map((it,i) => `
-      <div class="item-row" data-i="${i}" data-code="${esc(it.codigo)}" style="grid-template-columns:24px 1fr 120px">
-        <label class="switch" style="margin-top:9px"><input type="checkbox" class="sx-on" data-i="${i}" checked><span class="sl"></span></label>
-        <div><div class="t-code">${esc(it.codigo)}</div><div class="item-desc">${esc(it.descricao||"")} · saldo ${it.saldo}</div></div>
-        <input type="number" min="1" max="${it.saldo}" step="1" class="ctrl sx-qty" data-i="${i}" value="${it.saldo}">
+      <div class="sx-row" data-i="${i}" data-code="${esc(it.codigo)}">
+        <label class="switch"><input type="checkbox" class="sx-on" data-i="${i}" checked><span class="sl"></span></label>
+        <div class="sx-info">
+          <div class="mi-code">${esc(it.codigo)}</div>
+          ${it.descricao?`<div class="mi-desc">${esc(it.descricao)}</div>`:""}
+          <span class="qty-chip ok" style="margin-top:6px"><span class="qc-lab">Saldo</span><span class="qc-val">${it.saldo}</span></span>
+        </div>
+        <div class="sx-qtybox">
+          <label>Qtd a sair</label>
+          <input type="number" min="0" max="${it.saldo}" step="1" class="ctrl sx-qty" data-i="${i}" value="${it.saldo}">
+        </div>
       </div>`).join("");
   openModal(
     `<div class="m-head"><div><div style="margin-bottom:8px">${movBadge("saida")}</div><h3>Registrar saída (baixa)</h3></div><button class="x" data-close>${ICONS.x}</button></div>
@@ -2204,17 +2234,30 @@ async function openSaida(id){
      <div class="m-foot"><button class="btn btn-ghost" data-close>Cancelar</button><button class="btn btn-ok" id="sDo">${ICONS.check} Confirmar saída</button></div>`
   );
   setTimeout(() => { const n = $("#sNota"); if(n) n.focus(); }, 60);
+  // marcar/desmarcar item: escurece a linha e desabilita a quantidade; clamp ao saldo
+  $$("#modal .sx-row").forEach(row => {
+    const chk = row.querySelector(".sx-on");
+    const inp = row.querySelector(".sx-qty");
+    const max = parseInt(inp.max,10) || 0;
+    const sync = () => { row.classList.toggle("off", !chk.checked); inp.disabled = !chk.checked; };
+    chk.addEventListener("change", sync); sync();
+    inp.addEventListener("input", () => {
+      let v = parseInt(inp.value,10); if(isNaN(v)) return;
+      if(v > max) inp.value = max;
+      if(v < 0) inp.value = 0;
+    });
+  });
   $("#sDo").addEventListener("click", async () => {
     const nota = $("#sNota").value.trim();
     if(!nota){ toast({ kind:"danger", title:"Informe a nota de saída" }); $("#sNota").focus(); return; }
     const itens = [];
-    $$("#modal .item-row").forEach(row => {
+    $$("#modal .sx-row").forEach(row => {
       const i = +row.dataset.i;
       const on = row.querySelector(".sx-on").checked;
       if(!on) return;
       const code = row.dataset.code;
       const li = pend.find(p => p.codigo === code);
-      const q = Math.max(1, parseInt(row.querySelector(".sx-qty").value,10)||0);
+      const q = parseInt(row.querySelector(".sx-qty").value,10) || 0;
       if(q > 0) itens.push({ codigo: code, descricao: (findItemCad(code)?.descricao)||(li?li.descricao:"")||"", quantidade: Math.min(q, li?li.saldo:q) });
     });
     if(!itens.length){ toast({ kind:"danger", title:"Selecione ao menos um item" }); return; }
