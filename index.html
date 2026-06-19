@@ -1288,7 +1288,7 @@ function renderView(){
     case "nova":      el.innerHTML = viewNova();      wireNova(); break;
     case "fila":      el.innerHTML = viewFila();      wireRows(); break;
     case "historico": el.innerHTML = viewHistorico(); wireHistorico(); wireRows(); break;
-    case "saidas":    el.innerHTML = viewSaidas();    wireRows(); break;
+    case "saidas":    el.innerHTML = viewSaidas();    wireSaidas(); wireRows(); break;
     case "config":    el.innerHTML = viewConfig();    wireConfig(); break;
     case "usuarios":  el.innerHTML = `<div class="page"><div class="card"><div class="empty">Carregando usuários…</div></div></div>`; renderUsuarios(); break;
   }
@@ -1749,8 +1749,18 @@ function saidasTable(list){
   }).join("");
   return `<div class="card"><div class="tbl-wrap"><table class="tbl"><thead>${head}</thead><tbody>${rows}</tbody></table></div></div>`;
 }
+const SF = { filial:"", de:"", ate:"" };   // filtros (opcionais) da tela Saídas pendentes
+function saidasFilter(list){
+  let out = list.slice();
+  if(SF.filial) out = out.filter(s => s.filial === SF.filial);
+  if(SF.de){ const t = new Date(SF.de + "T00:00:00").getTime(); out = out.filter(s => new Date(s.concluido_at || s.created_at).getTime() >= t); }
+  if(SF.ate){ const t = new Date(SF.ate + "T23:59:59").getTime(); out = out.filter(s => new Date(s.concluido_at || s.created_at).getTime() <= t); }
+  return out;
+}
 function viewSaidas(){
-  const all = pendingSaidas(state.sols);
+  const total = pendingSaidas(state.sols);
+  const all = saidasFilter(total);
+  const temFiltro = !!(SF.filial || SF.de || SF.ate);
   const danger = all.filter(s => overdueInfo(s).state === "danger");
   const warn = all.filter(s => overdueInfo(s).state === "warn");
   const rank = { danger:0, warn:1, ok:2, none:3 };
@@ -1762,6 +1772,12 @@ function viewSaidas(){
   const most = danger[0] || warn[0] || sorted[0] || null;
   const head = `<div class="page-head"><div><div class="crumb">Administração</div><h1>Saídas pendentes</h1>
       <p class="lead">Entradas concluídas que ainda não tiveram a baixa (saída) registrada. O prazo de cada motivo define quando o alerta dispara.</p></div></div>`;
+  const filtros = `<div class="filters">
+      <div class="field"><label>Filial</label><select class="ctrl" id="sfFilial">${filialOptions(SF.filial, true)}</select></div>
+      <div class="field"><label>Concluída de</label><input type="date" class="ctrl" id="sfDe" value="${SF.de}"></div>
+      <div class="field"><label>Concluída até</label><input type="date" class="ctrl" id="sfAte" value="${SF.ate}"></div>
+      <div class="field" style="align-self:flex-end"><button class="btn btn-ghost btn-sm" id="sfLimpar"${temFiltro?"":" disabled"}>${ICONS.x} Limpar filtros</button></div>
+    </div>`;
   const kpis = `<div class="kpis">
       ${kpi("Pendências", all.length, ICONS.saidas, all.length ? "warn" : "info")}
       ${kpi("Vencidas", danger.length, ICONS.alert, danger.length ? "danger" : "info")}
@@ -1771,8 +1787,17 @@ function viewSaidas(){
   let alert = "";
   if(danger.length) alert = `<div class="alert-box danger">${ICONS.alert}<div><div class="ab-t">${danger.length} pendência(s) de saída vencida(s)</div><div class="ab-m">O prazo do motivo da entrada já passou e a saída ainda não foi registrada.</div></div></div>`;
   else if(warn.length) alert = `<div class="alert-box warn">${ICONS.alert}<div><div class="ab-t">${warn.length} pendência(s) próxima(s) do vencimento</div><div class="ab-m">Faltam 3 dias ou menos para o prazo do motivo.</div></div></div>`;
-  const body = all.length ? saidasTable(sorted) : emptyState("Nenhuma pendência de saída", "Todas as entradas que exigem baixa já foram resolvidas.");
-  return `<div class="page">${head}${kpis}${alert}${body}</div>`;
+  const count = temFiltro ? `<div class="muted" style="margin:2px 0 14px;font-size:12.5px">${all.length} de ${total.length} pendência(s) · filtro aplicado</div>` : "";
+  let body;
+  if(all.length) body = saidasTable(sorted);
+  else if(temFiltro) body = emptyState("Nenhuma pendência no filtro", "Nenhuma saída pendente corresponde aos filtros. Ajuste a filial ou o período — ou limpe os filtros para ver tudo.");
+  else body = emptyState("Nenhuma pendência de saída", "Todas as entradas que exigem baixa já foram resolvidas.");
+  return `<div class="page">${head}${filtros}${kpis}${alert}${count}${body}</div>`;
+}
+function wireSaidas(){
+  const reRe = (id, key) => { const el = $(id); if(el) el.addEventListener("change", () => { SF[key] = el.value; renderView(); }); };
+  reRe("#sfFilial","filial"); reRe("#sfDe","de"); reRe("#sfAte","ate");
+  $("#sfLimpar") && $("#sfLimpar").addEventListener("click", () => { SF.filial = ""; SF.de = ""; SF.ate = ""; renderView(); });
 }
 
 /* ============================ 17. VIEW — HISTÓRICO ============================ */
