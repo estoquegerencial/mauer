@@ -282,6 +282,31 @@
   .tabs button:hover{color:var(--ink)}
   .tabs button.on{color:var(--ink);border-bottom-color:var(--orange)}
 
+  /* ====== DASHBOARD / RELATÓRIO ====== */
+  .slicers{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:14px 16px;box-shadow:var(--shadow);margin-bottom:16px}
+  .slicers .field{margin-bottom:0;min-width:150px}
+  .slicers .sl-tag{display:flex;align-items:center;gap:7px;font-family:var(--font-display);text-transform:uppercase;letter-spacing:.06em;font-size:11px;font-weight:700;color:var(--orange-d);padding-bottom:9px}
+  .slicers .sl-tag svg{width:15px;height:15px}
+  .xchips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+  .xchips .xc-lab{font-size:11.5px;color:var(--muted);font-weight:600}
+  .xchip{display:inline-flex;align-items:center;gap:7px;background:var(--warn-bg);color:var(--orange-d);border:1px solid var(--orange);border-radius:30px;padding:5px 11px;font-size:12px;font-weight:600}
+  .xchip button{color:inherit;display:grid;place-items:center;padding:0}
+  .xchip button svg{width:13px;height:13px}
+  .dash-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+  .dash-grid .span2{grid-column:1 / -1}
+  .chart-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow);padding:16px 18px;min-width:0}
+  .chart-card .ch-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px}
+  .chart-card h3{font-family:var(--font-display);text-transform:uppercase;letter-spacing:.04em;font-size:13px;font-weight:700}
+  .chart-card .ch-sub{font-size:11.5px;color:var(--muted);margin-top:2px}
+  .chart-card .ch-tot{font-family:var(--font-display);font-weight:800;font-size:18px;color:var(--orange-d);white-space:nowrap}
+  .chart-box{width:100%;height:300px}
+  .chart-box.tall{height:360px}
+  .chart-empty{height:100%;display:grid;place-items:center;color:var(--muted);font-size:12.5px;text-align:center;padding:20px}
+  .dash-load{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px;padding:30px;justify-content:center}
+  .dash-spin{width:18px;height:18px;border:2.5px solid var(--line-strong);border-top-color:var(--orange);border-radius:50%;animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @media(max-width:920px){.dash-grid{grid-template-columns:1fr}.chart-box{height:280px}}
+
   @media(max-width:920px){
     .shell{grid-template-columns:1fr}
     .sidebar{display:none}
@@ -833,9 +858,32 @@ function playBeep(){
     });
   }catch(e){}
 }
+function playDeniedBeep(){
+  const c = _ctx(); if(!c) return;
+  if(c.state === "suspended"){ c.resume().catch(()=>{}); }
+  try{
+    const t0 = c.currentTime;
+    const out = c.createGain(); out.gain.value = 0.9; out.connect(c.destination);
+    // Toque de negação: duas notas descendentes, graves
+    const notes = [[440, 0.00, 0.20], [330, 0.18, 0.34]];
+    notes.forEach(([f, st, d]) => {
+      const o = c.createOscillator(), g = c.createGain();
+      o.type = "sawtooth"; o.frequency.setValueAtTime(f, t0 + st);
+      o.connect(g); g.connect(out);
+      g.gain.setValueAtTime(0.0001, t0 + st);
+      g.gain.exponentialRampToValueAtTime(0.5, t0 + st + 0.014);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + st + d);
+      o.start(t0 + st); o.stop(t0 + st + d + 0.03);
+    });
+  }catch(e){}
+}
 function beep(){
   if(state.config && state.config.som_ativo === false) return;
   playBeep();
+}
+function beepDenied(){
+  if(state.config && state.config.som_ativo === false) return;
+  playDeniedBeep();
 }
 function flashBell(){
   const svg = $("#tbBell svg");
@@ -879,7 +927,8 @@ const ICONS = {
   arrowDown:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>`,
   arrowUp:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>`,
   sun:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>`,
-  moon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>`
+  moon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>`,
+  relatorio:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="11" width="3" height="6"/><rect x="12" y="7" width="3" height="10"/><rect x="17" y="13" width="3" height="4"/></svg>`
 };
 
 /* ============================ 6. HELPERS DE DOMÍNIO ============================ */
@@ -1036,7 +1085,8 @@ const state = {
   sols: [],
   view: "fila",
   seenPending: new Set(),
-  firstSync: true
+  firstSync: true,
+  seenStatus: null              // mapa id->status das MINHAS solicitações (notifica quando resolvidas)
 };
 let cfgEdit = null;            // cópia editável da config (tela Configurações)
 let nova = { mov: "entrada" }; // estado do formulário de nova solicitação
@@ -1048,7 +1098,7 @@ let _syncTimer = null;
 
 const VIEW_TITLES = {
   nova:"Nova solicitação", fila:"Fila de emissão", historico:"Histórico",
-  saidas:"Saídas pendentes", config:"Configurações", usuarios:"Usuários"
+  saidas:"Saídas pendentes", relatorio:"Relatório", config:"Configurações", usuarios:"Usuários"
 };
 
 /* ============================ 8. BOOT / SESSÃO ============================ */
@@ -1062,6 +1112,7 @@ function applyTheme(t){
   const i1 = $("#themeIcon");   if(i1) i1.innerHTML = icon;
   const i2 = $("#themeIconTb"); if(i2) i2.innerHTML = icon;
   const l1 = $("#themeLabel");  if(l1) l1.textContent = dark ? "Modo claro" : "Modo escuro";
+  if(typeof state !== "undefined" && state && state.view === "relatorio" && state.user){ renderRelatorioCharts(); }
 }
 function toggleTheme(){
   const cur = document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
@@ -1109,7 +1160,7 @@ async function enterApp(user){
   state.user = user;
   try{ state.config = await Backend.getConfig(); }catch(e){}
   state.view = user.role === "admin" ? "fila" : "nova";
-  state.firstSync = true; state.seenPending = new Set();
+  state.firstSync = true; state.seenPending = new Set(); state.seenStatus = null;
   $("#auth").style.display = "none";
   $("#app").classList.add("on");
   renderUser();
@@ -1119,7 +1170,7 @@ async function enterApp(user){
 
 async function doLogout(){
   try{ await Backend.signOut(); }catch(e){}
-  state.user = null; state.firstSync = true; state.seenPending = new Set();
+  state.user = null; state.firstSync = true; state.seenPending = new Set(); state.seenStatus = null;
   closeModal(); closeSidebar();
   $("#app").classList.remove("on");
   showLogin();
@@ -1252,6 +1303,7 @@ function renderNav(){
   if(admin){
     items.push({ sec:"Administração" });
     items.push({ v:"saidas",   label:"Saídas pendentes", icon:ICONS.saidas, badge: saidas.length || null, badgeWarn: overdue.length > 0 });
+    items.push({ v:"relatorio", label:"Relatório", icon:ICONS.relatorio });
     items.push({ v:"config",   label:"Configurações", icon:ICONS.config });
     items.push({ v:"usuarios", label:"Usuários", icon:ICONS.usuarios });
   }
@@ -1283,12 +1335,14 @@ function go(view){
 function renderView(){
   const el = $("#view"); if(!el || !state.user) return;
   const v = state.view;
-  if((v === "saidas" || v === "config" || v === "usuarios") && state.user.role !== "admin"){ state.view = "nova"; }
+  if((v === "saidas" || v === "relatorio" || v === "config" || v === "usuarios") && state.user.role !== "admin"){ state.view = "nova"; }
+  if(state.view !== "relatorio") disposeCharts();
   switch(state.view){
     case "nova":      el.innerHTML = viewNova();      wireNova(); break;
     case "fila":      el.innerHTML = viewFila();      wireRows(); break;
     case "historico": el.innerHTML = viewHistorico(); wireHistorico(); wireRows(); break;
     case "saidas":    el.innerHTML = viewSaidas();    wireSaidas(); wireRows(); break;
+    case "relatorio": el.innerHTML = viewRelatorio(); wireRelatorio(); renderRelatorioCharts(); break;
     case "config":    el.innerHTML = viewConfig();    wireConfig(); break;
     case "usuarios":  el.innerHTML = `<div class="page"><div class="card"><div class="empty">Carregando usuários…</div></div></div>`; renderUsuarios(); break;
   }
@@ -1325,6 +1379,7 @@ async function reload(opts){
   state.sols = await Backend.listSolicitacoes();
   if(opts.withConfig && state.view !== "config"){ try{ state.config = await Backend.getConfig(); }catch(e){} }
   if(state.user.role === "admin") detectNew();
+  detectMyResolved();
   renderNav();
   if(canAutoRerender()){ renderView(); }
   else { pendingRerender = true; }
@@ -1357,6 +1412,43 @@ function detectNew(){
         : "Há novas demandas aguardando emissão de nota.",
       icon: ICONS.bell
     });
+  }
+}
+
+function detectMyResolved(){
+  const mine = state.sols.filter(s => s.created_by === state.user.id && !s.deleted_at);
+  // primeira sincronização da sessão: apenas registra os status atuais (não notifica retroativo)
+  if(state.seenStatus === null){
+    state.seenStatus = {};
+    mine.forEach(s => { state.seenStatus[s.id] = s.status; });
+    return;
+  }
+  const emitidas = [], negadas = [];
+  mine.forEach(s => {
+    const prev = state.seenStatus[s.id];
+    state.seenStatus[s.id] = s.status;
+    if(prev === undefined || prev === s.status) return;          // recém-criada ou sem mudança
+    const fuiEu = (s.status === "concluido" && s.concluido_by === state.user.id)
+               || (s.status === "recusado"  && s.recusa_by   === state.user.id);
+    if(fuiEu) return;                                            // eu mesmo resolvi — não precisa avisar
+    if(s.status === "concluido") emitidas.push(s);
+    else if(s.status === "recusado") negadas.push(s);
+  });
+  if(emitidas.length){
+    beep(); flashBell();
+    emitidas.forEach(s => toast({
+      kind:"ok", icon: ICONS.check, timeout: 10000,
+      title: `NF de ${movLabel(s.movimentacao).toLowerCase()} emitida — nº ${s.nota_numero || "—"}`,
+      msg: `${esc(s.filial)} · ${solQtdTotal(s)}× ${esc(solCodigoResumo(s))}`
+    }));
+  }
+  if(negadas.length){
+    beepDenied(); flashBell();
+    negadas.forEach(s => toast({
+      kind:"danger", icon: ICONS.x, timeout: 12000,
+      title: `Operação negada — ${movLabel(s.movimentacao).toLowerCase()}`,
+      msg: `${esc(s.filial)} · ${solQtdTotal(s)}× ${esc(solCodigoResumo(s))} — ${esc(s.recusa_motivo || "sem motivo informado")}`
+    }));
   }
 }
 
@@ -1798,6 +1890,291 @@ function wireSaidas(){
   const reRe = (id, key) => { const el = $(id); if(el) el.addEventListener("change", () => { SF[key] = el.value; renderView(); }); };
   reRe("#sfFilial","filial"); reRe("#sfDe","de"); reRe("#sfAte","ate");
   $("#sfLimpar") && $("#sfLimpar").addEventListener("click", () => { SF.filial = ""; SF.de = ""; SF.ate = ""; renderView(); });
+}
+
+/* ============================ 16B. VIEW — RELATÓRIO (dashboard) ============================ */
+const RF = { filial:"", mov:"", motivo:"", de:"", ate:"" };   // filtros/cross-filter do dashboard
+let _charts = [];
+function _chartResize(){ _charts.forEach(c => { try{ c.resize(); }catch(e){} }); }
+function disposeCharts(){ _charts.forEach(c => { try{ c.dispose(); }catch(e){} }); _charts = []; window.removeEventListener("resize", _chartResize); }
+async function loadECharts(){
+  if(window.echarts) return;
+  await new Promise((res, rej) => {
+    const s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js";
+    s.onload = res; s.onerror = () => rej(new Error("Não foi possível carregar a biblioteca de gráficos (verifique a conexão)."));
+    document.head.appendChild(s);
+  });
+}
+const DASH_PAL = ["#E2892A","#3f6fb0","#659EA0","#2f8f5b","#7a5bb0","#d64545","#c8741b","#4d7e80","#b0565b","#243a66","#46c283","#f0a44e"];
+function chartTheme(){
+  const dark = document.documentElement.getAttribute("data-theme") === "dark";
+  return {
+    dark,
+    axis:  dark ? "#9fb0cf" : "#5e6b82",
+    split: dark ? "rgba(255,255,255,.07)" : "rgba(18,31,58,.07)",
+    text:  dark ? "#e9eef7" : "#121F3A",
+    tipBg: dark ? "#0f1c33" : "#ffffff",
+    tipBd: dark ? "#26375a" : "#e1e6ef"
+  };
+}
+
+/* ---- bases filtradas ---- */
+function rfMovBase(){
+  let l = (state.sols || []).filter(s => !s.deleted_at);
+  if(RF.filial) l = l.filter(s => s.filial === RF.filial);
+  if(RF.mov)    l = l.filter(s => s.movimentacao === RF.mov);
+  if(RF.motivo) l = l.filter(s => s.motivo_label === RF.motivo);
+  if(RF.de){  const t = new Date(RF.de + "T00:00:00").getTime();  l = l.filter(s => new Date(s.created_at).getTime() >= t); }
+  if(RF.ate){ const t = new Date(RF.ate + "T23:59:59").getTime(); l = l.filter(s => new Date(s.created_at).getTime() <= t); }
+  return l;
+}
+function rfPendBase(){
+  let l = pendingSaidas(state.sols);
+  if(RF.filial) l = l.filter(s => s.filial === RF.filial);
+  if(RF.motivo) l = l.filter(s => s.motivo_label === RF.motivo);
+  if(RF.de){  const t = new Date(RF.de + "T00:00:00").getTime();  l = l.filter(s => new Date(s.concluido_at || s.created_at).getTime() >= t); }
+  if(RF.ate){ const t = new Date(RF.ate + "T23:59:59").getTime(); l = l.filter(s => new Date(s.concluido_at || s.created_at).getTime() <= t); }
+  return l;
+}
+function sumBy(list, keyFn, valFn){
+  const m = new Map();
+  list.forEach(x => { const k = keyFn(x); m.set(k, (m.get(k) || 0) + valFn(x)); });
+  return m;
+}
+
+function viewRelatorio(){
+  const pend = rfPendBase();
+  const mov  = rfMovBase();
+  const pendUn = pend.reduce((a,s) => a + saldoEntrada(s).saldoTotal, 0);
+  const venc = pend.filter(s => overdueInfo(s).state === "danger");
+  const vencUn = venc.reduce((a,s) => a + saldoEntrada(s).saldoTotal, 0);
+  const entUn = mov.filter(s => s.movimentacao === "entrada").reduce((a,s) => a + solQtdTotal(s), 0);
+  const saiUn = mov.filter(s => s.movimentacao === "saida").reduce((a,s) => a + solQtdTotal(s), 0);
+  const filiaisPend = new Set(pend.map(s => s.filial)).size;
+
+  const head = `<div class="page-head"><div><div class="crumb">Administração</div><h1>Relatório</h1>
+      <p class="lead">Visão analítica e interativa do estoque pendente de saída e das movimentações. Use os filtros ou clique nos gráficos para cruzar os dados.</p></div></div>`;
+
+  const slicers = `<div class="slicers">
+      <div class="sl-tag">${ICONS.relatorio} Filtros</div>
+      <div class="field"><label>Filial</label><select class="ctrl" id="rfFilial">${filialOptions(RF.filial, true)}</select></div>
+      <div class="field"><label>Movimentação</label><select class="ctrl" id="rfMov">
+        <option value=""${RF.mov?"":" selected"}>Todas</option>
+        <option value="entrada"${RF.mov==="entrada"?" selected":""}>Entrada</option>
+        <option value="saida"${RF.mov==="saida"?" selected":""}>Saída</option></select></div>
+      <div class="field"><label>De</label><input type="date" class="ctrl" id="rfDe" value="${RF.de}"></div>
+      <div class="field"><label>Até</label><input type="date" class="ctrl" id="rfAte" value="${RF.ate}"></div>
+      <div class="field" style="align-self:flex-end"><button class="btn btn-ghost btn-sm" id="rfLimpar">${ICONS.x} Limpar</button></div>
+    </div>`;
+
+  // chips de cross-filter ativos
+  const chips = [];
+  if(RF.filial) chips.push(`<span class="xchip">Filial: ${esc(RF.filial)}<button data-clr="filial">${ICONS.x}</button></span>`);
+  if(RF.mov)    chips.push(`<span class="xchip">Movimentação: ${RF.mov==="entrada"?"Entrada":"Saída"}<button data-clr="mov">${ICONS.x}</button></span>`);
+  if(RF.motivo) chips.push(`<span class="xchip">Motivo: ${esc(RF.motivo)}<button data-clr="motivo">${ICONS.x}</button></span>`);
+  if(RF.de)     chips.push(`<span class="xchip">De: ${esc(RF.de)}<button data-clr="de">${ICONS.x}</button></span>`);
+  if(RF.ate)    chips.push(`<span class="xchip">Até: ${esc(RF.ate)}<button data-clr="ate">${ICONS.x}</button></span>`);
+  const chipsBar = chips.length ? `<div class="xchips"><span class="xc-lab">Cruzamentos ativos:</span>${chips.join("")}</div>` : "";
+
+  const kpis = `<div class="kpis">
+      ${kpi("Pendente p/ saída", pendUn, ICONS.saidas, pendUn ? "warn" : "info")}
+      ${kpi("Notas com saldo", pend.length, ICONS.historico, "info")}
+      ${kpi("Vencidas (un.)", vencUn, ICONS.alert, vencUn ? "danger" : "info")}
+      ${kpi("Filiais c/ pendência", filiaisPend, ICONS.config, "info")}
+      ${kpi("Entradas (un.)", entUn, ICONS.arrowDown, "danger")}
+      ${kpi("Saídas (un.)", saiUn, ICONS.arrowUp, "ok")}
+    </div>`;
+
+  const card = (id, title, sub, span, tall) =>
+    `<div class="chart-card${span?" span2":""}"><div class="ch-head"><div><h3>${title}</h3><div class="ch-sub">${sub}</div></div></div><div class="chart-box${tall?" tall":""}" id="${id}"><div class="dash-load"><span class="dash-spin"></span> Carregando gráfico…</div></div></div>`;
+
+  const grid = `<div class="dash-grid">
+      ${card("chMotivoPend","Pendentes de saída por motivo","Unidades ainda não baixadas, agrupadas pelo motivo da entrada · clique para filtrar",true)}
+      ${card("chMotivoFilial","Pneus por motivo e filial","Quantidade movimentada empilhada por filial · clique numa filial para filtrar",true)}
+      ${card("chEntSai","Entradas × Saídas por filial","Unidades por filial · clique para filtrar")}
+      ${card("chDonutFilial","Pendências de saída por filial","Distribuição das unidades pendentes · clique para filtrar")}
+      ${card("chAging","Aging das pendências","Unidades pendentes por situação de prazo")}
+      ${card("chStatus","Status das solicitações","Quantidade de solicitações por status no período")}
+      ${card("chTempo","Movimentação ao longo do tempo","Unidades de entrada e saída por mês",true,true)}
+    </div>`;
+
+  return `<div class="page">${head}${slicers}${chipsBar}${kpis}${grid}</div>`;
+}
+
+function wireRelatorio(){
+  const re = (id, key) => { const el = $(id); if(el) el.addEventListener("change", () => { RF[key] = el.value; renderView(); }); };
+  re("#rfFilial","filial"); re("#rfMov","mov"); re("#rfDe","de"); re("#rfAte","ate");
+  $("#rfLimpar") && $("#rfLimpar").addEventListener("click", () => { RF.filial=""; RF.mov=""; RF.motivo=""; RF.de=""; RF.ate=""; renderView(); });
+  $$("#view .xchip [data-clr]").forEach(b => b.addEventListener("click", () => { RF[b.dataset.clr] = ""; renderView(); }));
+}
+
+function _emptyBox(id, msg){ const el = document.getElementById(id); if(el) el.innerHTML = `<div class="chart-empty">${msg||"Sem dados para os filtros atuais."}</div>`; }
+function mkChart(id, option, onClick){
+  const el = document.getElementById(id); if(!el) return;
+  el.innerHTML = "";
+  const c = window.echarts.init(el, null, { renderer:"canvas" });
+  c.setOption(option, true);
+  if(onClick) c.on("click", onClick);
+  _charts.push(c);
+}
+function setCrossFilter(key, value){
+  if(RF[key] === value) RF[key] = "";   // clicar de novo limpa
+  else RF[key] = value;
+  renderView();
+}
+
+async function renderRelatorioCharts(){
+  disposeCharts();
+  try{ await loadECharts(); }
+  catch(e){ ["chMotivoPend","chMotivoFilial","chEntSai","chDonutFilial","chAging","chStatus","chTempo"].forEach(id => _emptyBox(id, (e&&e.message)||"Falha ao carregar gráficos.")); return; }
+  if(state.view !== "relatorio") return;   // mudou de tela enquanto carregava
+  const T = chartTheme();
+  const baseTip = (trig) => ({ trigger: trig||"item", backgroundColor:T.tipBg, borderColor:T.tipBd, borderWidth:1, textStyle:{ color:T.text, fontSize:12 }, extraCssText:"border-radius:9px;box-shadow:0 10px 30px rgba(8,16,33,.22);padding:9px 12px" });
+  const axisLabel = { color:T.axis, fontSize:11 };
+  const splitLine = { lineStyle:{ color:T.split } };
+  const fmtInt = (v) => (v==null?0:v).toLocaleString("pt-BR");
+
+  const pend = rfPendBase();
+  const mov  = rfMovBase();
+
+  /* 1) Pendentes de saída por motivo (barra horizontal) */
+  (() => {
+    const m = sumBy(pend, s => s.motivo_label || "—", s => saldoEntrada(s).saldoTotal);
+    const arr = [...m.entries()].filter(e => e[1] > 0).sort((a,b) => a[1] - b[1]);
+    if(!arr.length) return _emptyBox("chMotivoPend", "Nenhuma pendência de saída nos filtros atuais.");
+    mkChart("chMotivoPend", {
+      grid:{ left:8, right:46, top:12, bottom:6, containLabel:true },
+      tooltip:{ ...baseTip("axis"), axisPointer:{ type:"shadow" }, valueFormatter:fmtInt },
+      xAxis:{ type:"value", axisLabel, splitLine, axisLine:{ show:false } },
+      yAxis:{ type:"category", data:arr.map(e=>e[0]), axisLabel, axisLine:{ lineStyle:{ color:T.split } }, axisTick:{ show:false } },
+      series:[{ type:"bar", data:arr.map(e=>e[1]), barWidth:"56%",
+        itemStyle:{ color:new echarts.graphic.LinearGradient(0,0,1,0,[{offset:0,color:"#E2892A"},{offset:1,color:"#c8741b"}]), borderRadius:[0,7,7,0] },
+        label:{ show:true, position:"right", color:T.text, fontWeight:700, formatter:(p)=>fmtInt(p.value) },
+        emphasis:{ itemStyle:{ color:"#f0a44e" } } }],
+      animationDuration:600
+    }, (p) => setCrossFilter("motivo", arr[p.dataIndex][0]));
+  })();
+
+  /* 2) Pneus por motivo e filial (barra empilhada: x=filial, série=motivo) */
+  (() => {
+    const filiais = [...new Set(mov.map(s => s.filial || "—"))].sort();
+    const motivos = [...new Set(mov.map(s => s.motivo_label || "—"))];
+    if(!filiais.length || !motivos.length) return _emptyBox("chMotivoFilial", "Sem movimentações nos filtros atuais.");
+    const idx = {}; motivos.forEach(mt => idx[mt] = {});
+    mov.forEach(s => { const mt = s.motivo_label || "—", f = s.filial || "—"; idx[mt][f] = (idx[mt][f] || 0) + solQtdTotal(s); });
+    const series = motivos.map((mt,i) => ({
+      name:mt, type:"bar", stack:"q", barMaxWidth:48,
+      itemStyle:{ color:DASH_PAL[i % DASH_PAL.length] },
+      emphasis:{ focus:"series" },
+      data: filiais.map(f => idx[mt][f] || 0)
+    }));
+    mkChart("chMotivoFilial", {
+      grid:{ left:8, right:16, top:42, bottom:6, containLabel:true },
+      tooltip:{ ...baseTip("axis"), axisPointer:{ type:"shadow" }, valueFormatter:fmtInt },
+      legend:{ top:6, textStyle:{ color:T.axis, fontSize:11 }, type:"scroll" },
+      xAxis:{ type:"category", data:filiais, axisLabel, axisLine:{ lineStyle:{ color:T.split } }, axisTick:{ show:false } },
+      yAxis:{ type:"value", axisLabel, splitLine },
+      series, animationDuration:600
+    }, (p) => { if(p.name) setCrossFilter("filial", p.name); });
+  })();
+
+  /* 3) Entradas × Saídas por filial (barras agrupadas) */
+  (() => {
+    const filiais = [...new Set(mov.map(s => s.filial || "—"))].sort();
+    if(!filiais.length) return _emptyBox("chEntSai", "Sem movimentações nos filtros atuais.");
+    const ent = filiais.map(f => mov.filter(s => (s.filial||"—")===f && s.movimentacao==="entrada").reduce((a,s)=>a+solQtdTotal(s),0));
+    const sai = filiais.map(f => mov.filter(s => (s.filial||"—")===f && s.movimentacao==="saida").reduce((a,s)=>a+solQtdTotal(s),0));
+    mkChart("chEntSai", {
+      grid:{ left:8, right:14, top:40, bottom:6, containLabel:true },
+      tooltip:{ ...baseTip("axis"), axisPointer:{ type:"shadow" }, valueFormatter:fmtInt },
+      legend:{ top:6, textStyle:{ color:T.axis, fontSize:11 } },
+      xAxis:{ type:"category", data:filiais, axisLabel, axisLine:{ lineStyle:{ color:T.split } }, axisTick:{ show:false } },
+      yAxis:{ type:"value", axisLabel, splitLine },
+      series:[
+        { name:"Entradas", type:"bar", data:ent, barMaxWidth:26, itemStyle:{ color:"#d64545", borderRadius:[5,5,0,0] }, emphasis:{ itemStyle:{ color:"#e76a6a" } } },
+        { name:"Saídas",   type:"bar", data:sai, barMaxWidth:26, itemStyle:{ color:"#2f8f5b", borderRadius:[5,5,0,0] }, emphasis:{ itemStyle:{ color:"#46c283" } } }
+      ], animationDuration:600
+    }, (p) => { if(p.name) setCrossFilter("filial", p.name); });
+  })();
+
+  /* 4) Pendências de saída por filial (donut) */
+  (() => {
+    const m = sumBy(pend, s => s.filial || "—", s => saldoEntrada(s).saldoTotal);
+    const arr = [...m.entries()].filter(e => e[1] > 0).map(e => ({ name:e[0], value:e[1] }));
+    if(!arr.length) return _emptyBox("chDonutFilial", "Nenhuma pendência nos filtros atuais.");
+    mkChart("chDonutFilial", {
+      tooltip:{ ...baseTip("item"), formatter:(p)=>`${p.name}<br><b>${fmtInt(p.value)}</b> un. (${p.percent}%)` },
+      legend:{ bottom:0, textStyle:{ color:T.axis, fontSize:11 }, type:"scroll" },
+      color:DASH_PAL,
+      series:[{ type:"pie", radius:["46%","70%"], center:["50%","44%"], avoidLabelOverlap:true,
+        itemStyle:{ borderColor:T.tipBg, borderWidth:2, borderRadius:4 },
+        label:{ show:true, color:T.text, formatter:"{b}\n{d}%", fontSize:11 },
+        labelLine:{ length:8, length2:8 },
+        emphasis:{ label:{ fontWeight:700 } },
+        data:arr }], animationDuration:600
+    }, (p) => { if(p.name) setCrossFilter("filial", p.name); });
+  })();
+
+  /* 5) Aging das pendências (donut por situação de prazo) */
+  (() => {
+    const buckets = { ok:0, warn:0, danger:0 };
+    pend.forEach(s => { const st = overdueInfo(s).state; const u = saldoEntrada(s).saldoTotal; if(st==="danger") buckets.danger += u; else if(st==="warn") buckets.warn += u; else buckets.ok += u; });
+    const arr = [
+      { name:"Em prazo", value:buckets.ok, itemStyle:{ color:"#2f8f5b" } },
+      { name:"A vencer (≤3d)", value:buckets.warn, itemStyle:{ color:"#E2892A" } },
+      { name:"Vencida", value:buckets.danger, itemStyle:{ color:"#d64545" } }
+    ].filter(x => x.value > 0);
+    if(!arr.length) return _emptyBox("chAging", "Nenhuma pendência nos filtros atuais.");
+    mkChart("chAging", {
+      tooltip:{ ...baseTip("item"), formatter:(p)=>`${p.name}<br><b>${fmtInt(p.value)}</b> un. (${p.percent}%)` },
+      legend:{ bottom:0, textStyle:{ color:T.axis, fontSize:11 } },
+      series:[{ type:"pie", radius:["46%","70%"], center:["50%","44%"],
+        itemStyle:{ borderColor:T.tipBg, borderWidth:2, borderRadius:4 },
+        label:{ show:true, color:T.text, formatter:"{b}\n{c}", fontSize:11 },
+        emphasis:{ label:{ fontWeight:700 } }, data:arr }], animationDuration:600
+    });
+  })();
+
+  /* 6) Status das solicitações (donut por status) */
+  (() => {
+    const cores = { pendente:"#E2892A", concluido:"#2f8f5b", recusado:"#d64545", cancelado:"#7e8aa3" };
+    const m = sumBy(mov, s => s.status || "—", () => 1);
+    const arr = [...m.entries()].map(e => ({ name:(STATUS[e[0]]||{}).label || e[0], value:e[1], itemStyle:{ color:cores[e[0]] || "#3f6fb0" } }));
+    if(!arr.length) return _emptyBox("chStatus", "Sem solicitações nos filtros atuais.");
+    mkChart("chStatus", {
+      tooltip:{ ...baseTip("item"), formatter:(p)=>`${p.name}<br><b>${fmtInt(p.value)}</b> solicitação(ões) (${p.percent}%)` },
+      legend:{ bottom:0, textStyle:{ color:T.axis, fontSize:11 } },
+      series:[{ type:"pie", radius:["46%","70%"], center:["50%","44%"],
+        itemStyle:{ borderColor:T.tipBg, borderWidth:2, borderRadius:4 },
+        label:{ show:true, color:T.text, formatter:"{b}\n{c}", fontSize:11 },
+        emphasis:{ label:{ fontWeight:700 } }, data:arr }], animationDuration:600
+    });
+  })();
+
+  /* 7) Movimentação ao longo do tempo (área: entradas vs saídas por mês) */
+  (() => {
+    if(!mov.length) return _emptyBox("chTempo", "Sem movimentações nos filtros atuais.");
+    const mk = (d) => { const dt = new Date(d); return dt.getFullYear() + "-" + String(dt.getMonth()+1).padStart(2,"0"); };
+    const meses = [...new Set(mov.map(s => mk(s.created_at)))].sort();
+    const ent = meses.map(mes => mov.filter(s => mk(s.created_at)===mes && s.movimentacao==="entrada").reduce((a,s)=>a+solQtdTotal(s),0));
+    const sai = meses.map(mes => mov.filter(s => mk(s.created_at)===mes && s.movimentacao==="saida").reduce((a,s)=>a+solQtdTotal(s),0));
+    const rotulos = meses.map(m => { const [y,mm] = m.split("-"); return ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"][(+mm)-1] + "/" + y.slice(2); });
+    const area = (c1,c2) => new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:c1},{offset:1,color:c2}]);
+    mkChart("chTempo", {
+      grid:{ left:8, right:16, top:42, bottom:6, containLabel:true },
+      tooltip:{ ...baseTip("axis"), valueFormatter:fmtInt },
+      legend:{ top:6, textStyle:{ color:T.axis, fontSize:11 } },
+      xAxis:{ type:"category", boundaryGap:false, data:rotulos, axisLabel, axisLine:{ lineStyle:{ color:T.split } } },
+      yAxis:{ type:"value", axisLabel, splitLine },
+      series:[
+        { name:"Entradas", type:"line", smooth:true, symbol:"circle", symbolSize:7, data:ent, lineStyle:{ width:3, color:"#d64545" }, itemStyle:{ color:"#d64545" }, areaStyle:{ color:area("rgba(214,69,69,.28)","rgba(214,69,69,0)") } },
+        { name:"Saídas",   type:"line", smooth:true, symbol:"circle", symbolSize:7, data:sai, lineStyle:{ width:3, color:"#2f8f5b" }, itemStyle:{ color:"#2f8f5b" }, areaStyle:{ color:area("rgba(47,143,91,.28)","rgba(47,143,91,0)") } }
+      ], animationDuration:700
+    });
+  })();
+
+  window.addEventListener("resize", _chartResize);
 }
 
 /* ============================ 17. VIEW — HISTÓRICO ============================ */
